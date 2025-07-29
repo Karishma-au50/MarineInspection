@@ -1,17 +1,15 @@
 import 'dart:convert';
 
-
 import '../core/model/base_model.dart';
 
-class UserModel implements BaseModel {
+class AdminUserModel implements BaseModel {
   String? id;
   String? name;
   String? phone;
   String? email;
   String? role;
 
-
-  UserModel({
+  AdminUserModel({
     this.id,
     this.name,
     this.phone,
@@ -19,14 +17,14 @@ class UserModel implements BaseModel {
     this.role,
   });
 
-  UserModel copyWith({
+  AdminUserModel copyWith({
     String? id,
     String? name,
     String? phone,
     String? email,
     String? role,
   }) {
-    return UserModel(
+    return AdminUserModel(
       id: id ?? this.id,
       name: name ?? this.name,
       phone: phone ?? this.phone,
@@ -36,8 +34,8 @@ class UserModel implements BaseModel {
   }
 
   @override
-  factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
+  factory AdminUserModel.fromJson(Map<String, dynamic> json) {
+    return AdminUserModel(
       id: json['_id'],
       name: json['name'],
       phone: json['phone'],
@@ -45,6 +43,7 @@ class UserModel implements BaseModel {
       role: json['role'],
     );
   }
+
   @override
   Map<String, dynamic> toJson() {
     return {
@@ -61,5 +60,3 @@ class UserModel implements BaseModel {
     return jsonEncode(toJson());
   }
 }
-
-

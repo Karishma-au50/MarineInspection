@@ -1,4 +1,3 @@
-
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:marine_inspection/model/user_model.dart';
 
@@ -11,18 +10,22 @@ class AuthEndpoint {
 }
 
 class AuthService extends BaseApiService {
-  Future<ResponseModel> login(
-      {required String mobile, required String password}) async {
+  Future<ResponseModel> login({
+    required String mobile,
+    required String password,
+  }) async {
     final res = await post(
       AuthEndpoint.login,
       data: {'phone': mobile, 'password': password},
     );
-    Map<String, dynamic> decodedToken = JwtDecoder.decode(res.data['data']);
+    Map<String, dynamic> decodedToken = JwtDecoder.decode(
+      res.data['data']["token"],
+    );
     print("Decoded json :- $decodedToken");
     StorageService.instance.setUserId(UserModel.fromJson(decodedToken));
-    StorageService.instance.setToken(res.data['data']);
-    return res.data;
+    StorageService.instance.setToken(res.data['data']["token"]);
+    ResponseModel responseModel = ResponseModel().fromJson(res.data);
+
+    return responseModel;
   }
-
-
 }

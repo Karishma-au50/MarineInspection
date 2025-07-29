@@ -22,9 +22,10 @@ class ResponseModel<T> {
   }
 
   ResponseModel fromJson(Map<String, dynamic> json) {
+    
     return ResponseModel(
       message: json['message'],
-      status: json['status'],
+      status: json['statusCode'] >= 200 && json['statusCode'] < 300,
       data: T == BaseModel
           ? BaseModel.fromJson(json['data']) as T?
           : json['data'] as T?,

@@ -24,7 +24,6 @@ class _LoginScreenState extends State<LoginScreen> {
       ? Get.find<AuthController>()
       : Get.put(AuthController());
 
-
   @override
   void dispose() {
     _usernameController.dispose();
@@ -39,23 +38,27 @@ class _LoginScreenState extends State<LoginScreen> {
           mobile: _usernameController.text,
           password: _passwordController.text,
         );
-       
       } catch (e) {
         // Handle error
-        Get.snackbar('Error', e.toString(),
-            backgroundColor: Colors.red, colorText: Colors.white);
-          }
-    }}
+        Get.snackbar(
+          'Error',
+          e.toString(),
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundColor,
-    
+
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0),
         child: Column(
-         mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               Icons.directions_boat,
@@ -106,24 +109,28 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 30),
                   MyButton(
                     text: 'Login',
-                    onPressed:()async{
-                         if (_formKey.currentState!.validate()) {
-                            await controller.login(
-                              mobile: _usernameController.text,
-                              password: _passwordController.text,
-                            );
-                            if (Get.isRegistered<AuthController>()) {
-                              context.push(AppPages.home);
-                            } else {
-                              Get.snackbar('Error', 'Login failed',
-                                  backgroundColor: Colors.red,
-                                  colorText: Colors.white);
-                            }
-                         
+                    onPressed: () async {
+                      if (_formKey.currentState!.validate()) {
+                        bool res = await controller.login(
+                          mobile: _usernameController.text,
+                          password: _passwordController.text,
+                        );
+                        if (res) {
+                          // Navigate to home page on successful login
+                          if (mounted) GoRouter.of(context).go(AppPages.home);
+                        } else {
+                          // Show error message
+                          Get.snackbar(
+                            'Login Failed',
+                            'Please check your credentials and try again.',
+                            backgroundColor: Colors.red,
+                            colorText: Colors.white,
+                          );
+                        }
                       }
-
-                    }
+                    },
                   ),
+
                   // SizedBox(
                   //   width: double.infinity,
                   //   height: 50,
@@ -152,11 +159,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   //           ),
                   //   ),
                   // ),
-               
                 ],
               ),
             ),
-          
           ],
         ),
       ),

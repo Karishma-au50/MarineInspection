@@ -8,19 +8,22 @@ import '../api/auth_service.dart';
 class AuthController extends GetxController {
   final _api = AuthService();
 
-  Future<void> login({required String mobile, required String password}) async {
+  Future<bool> login({required String mobile, required String password}) async {
     try {
       final res = await _api.login(mobile: mobile, password: password);
       if (res.status ?? false) {
-        Get.offAllNamed(AppPages.home);
+        // Get.offAllNamed(AppPages.home);
+        
         MyToasts.toastSuccess(res.message ?? "Success");
+        return true;
       }
       else {
         MyToasts.toastError(res.message ?? "Login failed");
       }
-
+      return false;
     } catch (e) {
       MyToasts.toastError(e.toString());
+      return false;
     }
   }
 

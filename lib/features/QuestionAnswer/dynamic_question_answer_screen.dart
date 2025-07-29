@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:marine_inspection/shared/constant/default_appbar.dart';
 import 'package:marine_inspection/shared/constant/font_helper.dart';
 import 'package:marine_inspection/models/inspection_template.dart';
@@ -457,7 +458,8 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      'Question ${index + 1}',
+                      // 'Question ${index + 1}',
+                      question.questionId,
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
@@ -503,8 +505,11 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                   children: [
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implement camera functionality
+                        onPressed: () async {
+                          final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+                          if (pickedFile != null) {
+                            // Handle the captured image
+                          }
                         },
                         icon: const Icon(Icons.camera_alt, color: Colors.black),
                         label: const Text(
@@ -523,8 +528,11 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                     const SizedBox(width: 16),
                     Expanded(
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          // TODO: Implement file upload functionality
+                        onPressed: () async {
+                          final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                          if (pickedFile != null) {
+                            // Handle the selected file
+                          }
                         },
                         icon: const Icon(Icons.upload_file, color: Colors.black),
                         label: const Text(
