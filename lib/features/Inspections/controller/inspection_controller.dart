@@ -1,15 +1,16 @@
+import 'dart:async';
+
 import 'package:get/get.dart';
+import 'package:marine_inspection/models/inspection_template.dart';
 
 import '../../../core/expections/custom_exception.dart';
-import '../../../models/inspection_models.dart';
 import '../../../services/inspection_service.dart';
 import '../../../shared/widgets/toast/my_toast.dart';
 
 class InspectionController extends GetxController {
   final _api = InspectionService();
 
-  Future<InspectionTemplate?> getAllInspections(
-    ) async {
+  Future<InspectionTemplate?> getAllInspections() async {
     try {
       final res = await _api.getInspectionTemplate();
       if (res.status ?? false) {
@@ -41,17 +42,27 @@ class InspectionController extends GetxController {
       final res = await _api.submitInspectionAnswers(
         templateId: inspection.templateId,
         answers: {
-          'sections': inspection.sections.map((section) => {
-            'sectionId': section.sectionId,
-            'questions': section.questions.map((q) => {
-              'questionId': q.questionId,
-              'answer': q.questionId,
-            }).toList(),
-          }).toList(),
+          'sections': inspection.sections
+              .map(
+                (section) => {
+                  'sectionId': section.sectionId,
+                  'questions': section.questions
+                      .map(
+                        (q) => {
+                          'questionId': q.questionId,
+                          'answer': q.questionId,
+                        },
+                      )
+                      .toList(),
+                },
+              )
+              .toList(),
         },
       );
       if (res.status ?? false) {
-        MyToasts.toastSuccess(res.message ?? "Inspection submitted successfully");
+        MyToasts.toastSuccess(
+          res.message ?? "Inspection submitted successfully",
+        );
         return true;
       } else {
         MyToasts.toastError(res.message ?? "Failed to submit inspection");
@@ -62,6 +73,7 @@ class InspectionController extends GetxController {
       return false;
     }
   }
+
   // Future<bool> updateInspection(InspectionTemplate inspection) async {
   //   try {
   //     final res = await _api.updateInspection(inspection);

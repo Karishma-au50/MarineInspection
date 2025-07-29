@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:marine_inspection/features/Auth/controller/auth_controller.dart';
+import 'package:marine_inspection/shared/widgets/toast/my_toast.dart';
 import '../../routes/app_pages.dart';
 import '../../shared/widgets/buttons/my_button.dart';
 import '../../shared/widgets/inputs/my_text_field.dart';
@@ -98,24 +99,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (res) {
                             // Navigate to home page on successful login
                             if (mounted) GoRouter.of(context).go(AppPages.home);
-                          }
-                          else{
-                            // Show error message if login fails
-                            Get.snackbar(
-                              'Login Failed',
-                              'Please check your credentials and try again.',
-                              backgroundColor: Colors.red,
-                              colorText: Colors.white,
+                          } else {
+                            MyToasts.toastError(
+                              'Login failed. Please check your credentials.',
                             );
                           }
+
                           // Error handling is already done in the controller via toast
                         } catch (e) {
-                          // Additional error handling if needed
-                          Get.snackbar(
-                            'Login Failed',
-                            'An unexpected error occurred. Please try again.',
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
+                          MyToasts.toastError(
+                            'Login failed. Please try again.',
                           );
                         }
                       }

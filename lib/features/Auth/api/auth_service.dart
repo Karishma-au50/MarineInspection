@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:marine_inspection/model/user_model.dart';
+import 'package:marine_inspection/shared/constant/app_constants.dart';
 
 import '../../../core/model/response_model.dart';
 import '../../../core/network/base_api_service.dart';
@@ -18,6 +20,10 @@ class AuthService extends BaseApiService {
       AuthEndpoint.login,
       data: {'phone': mobile, 'password': password},
     );
+    // final res = await Dio().post(
+    //   AppConstants.baseUrl + AuthEndpoint.login,
+    //   data: {'phone': mobile, 'password': password},
+    // );
     Map<String, dynamic> decodedToken = JwtDecoder.decode(
       res.data['data']["token"],
     );

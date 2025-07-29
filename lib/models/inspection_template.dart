@@ -6,7 +6,7 @@ class InspectionTemplate {
   final List<InspectionSection> sections;
   final String version;
   final bool isActive;
-  final String createdBy;
+  final CreatedBy createdBy;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -29,14 +29,20 @@ class InspectionTemplate {
       templateId: json['templateId'] ?? '',
       templateName: json['templateName'] ?? '',
       vesselType: json['vesselType'] ?? '',
-      sections: (json['sections'] as List<dynamic>?)
-          ?.map((section) => InspectionSection.fromJson(section))
-          .toList() ?? [],
+      sections:
+          (json['sections'] as List<dynamic>?)
+              ?.map((section) => InspectionSection.fromJson(section))
+              .toList() ??
+          [],
       version: json['version'] ?? '',
       isActive: json['isActive'] ?? false,
-      createdBy: json['createdBy'] ?? '',
-      createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
-      updatedAt: DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+      createdBy: CreatedBy.fromJson(json['createdBy'] ?? {}),
+      createdAt: DateTime.parse(
+        json['createdAt'] ?? DateTime.now().toIso8601String(),
+      ),
+      updatedAt: DateTime.parse(
+        json['updatedAt'] ?? DateTime.now().toIso8601String(),
+      ),
     );
   }
 
@@ -49,7 +55,7 @@ class InspectionTemplate {
       'sections': sections.map((section) => section.toJson()).toList(),
       'version': version,
       'isActive': isActive,
-      'createdBy': createdBy,
+      'createdBy': createdBy.toJson(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -75,9 +81,11 @@ class InspectionSection {
     return InspectionSection(
       sectionId: json['sectionId'] ?? '',
       sectionName: json['sectionName'] ?? '',
-      questions: (json['questions'] as List<dynamic>?)
-          ?.map((question) => InspectionQuestion.fromJson(question))
-          .toList() ?? [],
+      questions:
+          (json['questions'] as List<dynamic>?)
+              ?.map((question) => InspectionQuestion.fromJson(question))
+              .toList() ??
+          [],
       order: json['order'] ?? 0,
       id: json['_id'] ?? '',
     );
@@ -117,9 +125,11 @@ class InspectionQuestion {
       questionText: json['questionText'] ?? '',
       questionType: json['questionType'] ?? '',
       required: json['required'] ?? false,
-      options: (json['options'] as List<dynamic>?)
-          ?.map((option) => option.toString())
-          .toList() ?? [],
+      options:
+          (json['options'] as List<dynamic>?)
+              ?.map((option) => option.toString())
+              .toList() ??
+          [],
       id: json['_id'] ?? '',
     );
   }
@@ -136,28 +146,22 @@ class InspectionQuestion {
   }
 }
 
-class ApiResponse<T> {
-  final int statusCode;
-  final T data;
-  final String message;
-  final bool error;
+class CreatedBy {
+  final String id;
+  final String name;
+  final String email;
 
-  ApiResponse({
-    required this.statusCode,
-    required this.data,
-    required this.message,
-    required this.error,
-  });
+  CreatedBy({required this.id, required this.name, required this.email});
 
-  factory ApiResponse.fromJson(
-    Map<String, dynamic> json,
-    T Function(dynamic) fromJsonT,
-  ) {
-    return ApiResponse<T>(
-      statusCode: json['statusCode'] ?? 0,
-      data: fromJsonT(json['data']),
-      message: json['message'] ?? '',
-      error: json['error'] ?? false,
+  factory CreatedBy.fromJson(Map<String, dynamic> json) {
+    return CreatedBy(
+      id: json['id'] ?? '',
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'name': name, 'email': email};
   }
 }

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:image_picker/image_picker.dart';
@@ -5,17 +7,15 @@ import 'package:marine_inspection/shared/constant/default_appbar.dart';
 import 'package:marine_inspection/shared/constant/font_helper.dart';
 import 'package:marine_inspection/models/inspection_template.dart';
 
+import '../../models/inspection_answer_model.dart';
+import '../../models/inspection_submission_model.dart';
 import '../../shared/constant/app_colors.dart';
 
 class QuestionAnswerScreen extends StatefulWidget {
   final InspectionSection? section;
   final String? templateId;
 
-  const QuestionAnswerScreen({
-    super.key,
-    this.section,
-    this.templateId,
-  });
+  const QuestionAnswerScreen({super.key, this.section, this.templateId});
 
   @override
   State<QuestionAnswerScreen> createState() => _QuestionAnswerScreenState();
@@ -24,13 +24,38 @@ class QuestionAnswerScreen extends StatefulWidget {
 class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
   // Map to store answers for each question
   Map<String, dynamic> selectedAnswers = {};
-  
+  InspectionSubmission inspectionSubmissions = InspectionSubmission(
+    answers: [],
+    inspectionDate: DateTime.now(),
+  );
+
   // PageView controller
-  PageController _pageController = PageController();
+  final PageController _pageController = PageController();
   int currentPage = 0;
 
   // Additional notes for each question
   Map<String, String> additionalNotes = {};
+
+  @override
+  void initState() {
+    super.initState();
+    inspectionSubmissions = InspectionSubmission(
+      answers:
+          widget.section?.questions
+              .map(
+                (q) => InspectionAnswer(
+                  questionId: q.questionId,
+                  answer: q.questionType,
+                  satisfied: false,
+                  comments: '',
+                  file: File(''), // Placeholder, will be updated later
+                ),
+              )
+              .toList() ??
+          [],
+      inspectionDate: DateTime.now(),
+    );
+  }
 
   @override
   void dispose() {
@@ -39,14 +64,30 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
   }
 
   void _handleAnswerChange(String questionId, dynamic answer) {
+    // setState(() {
+    //   selectedAnswers[questionId] = answer;
+    // });
+
+    // Update the answer in the corresponding submission
     setState(() {
-      selectedAnswers[questionId] = answer;
+      inspectionSubmissions.answers
+              .firstWhere((a) => a.questionId == questionId)
+              .satisfied =
+          answer;
     });
   }
 
   void _handleNotesChange(String questionId, String notes) {
+    // setState(() {
+    //   additionalNotes[questionId] = notes;
+    // });
+
+    // Update the notes in the corresponding submission
     setState(() {
-      additionalNotes[questionId] = notes;
+      inspectionSubmissions.answers
+              .firstWhere((a) => a.questionId == questionId)
+              .comments =
+          notes;
     });
   }
 
@@ -64,6 +105,10 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
   }
 
   Widget _buildCheckboxQuestion(InspectionQuestion question) {
+    bool isChecked = inspectionSubmissions.answers
+        .firstWhere((a) => a.questionId == question.questionId)
+        .satisfied;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -76,7 +121,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
           ),
         ),
         const SizedBox(height: 20),
-        
+
         // Yes / No buttons
         Row(
           children: [
@@ -87,43 +132,45 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: selectedAnswers[question.questionId] == true 
-                        ? Colors.green.shade600 
+                    color: isChecked
+                        ? Colors.green.shade600
                         : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: selectedAnswers[question.questionId] == true 
-                          ? Colors.green.shade700 
+                      color: isChecked
+                          ? Colors.green.shade700
                           : Colors.grey.shade300,
-                      width: selectedAnswers[question.questionId] == true ? 2 : 1,
+                      width: isChecked ? 2 : 1,
                     ),
-                    boxShadow: selectedAnswers[question.questionId] == true ? [
-                      BoxShadow(
-                        color: Colors.green.withOpacity(0.3),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ] : null,
+                    boxShadow: isChecked
+                        ? [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.3),
+                              spreadRadius: 1,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (selectedAnswers[question.questionId] == true)
+                        if (isChecked)
                           const Icon(
                             Icons.check_circle_outline,
                             color: Colors.white,
                             size: 20,
                           ),
-                        if (selectedAnswers[question.questionId] == true) const SizedBox(width: 8),
+                        if (isChecked) const SizedBox(width: 8),
                         Text(
                           'Yes',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
-                            color: selectedAnswers[question.questionId] == true 
-                                ? Colors.white 
+                            color: selectedAnswers[question.questionId] == true
+                                ? Colors.white
                                 : Colors.black87,
                           ),
                         ),
@@ -141,44 +188,44 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
-                    color: selectedAnswers[question.questionId] == false 
-                        ? Colors.red.shade600 
+                    color: !isChecked
+                        ? Colors.red.shade600
                         : Colors.grey.shade200,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: selectedAnswers[question.questionId] == false 
-                          ? Colors.red.shade700 
+                      color: !isChecked
+                          ? Colors.red.shade700
                           : Colors.grey.shade300,
-                      width: selectedAnswers[question.questionId] == false ? 2 : 1,
+                      width: !isChecked ? 2 : 1,
                     ),
-                    boxShadow: selectedAnswers[question.questionId] == false ? [
-                      BoxShadow(
-                        color: Colors.red.withOpacity(0.3),
-                        spreadRadius: 1,
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ] : null,
+                    boxShadow: !isChecked
+                        ? [
+                            BoxShadow(
+                              color: Colors.red.withOpacity(0.3),
+                              spreadRadius: 1,
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
                   ),
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        if (selectedAnswers[question.questionId] == false)
+                        if (!isChecked)
                           const Icon(
                             Icons.cancel_outlined,
                             color: Colors.white,
                             size: 20,
                           ),
-                        if (selectedAnswers[question.questionId] == false) const SizedBox(width: 8),
+                        if (!isChecked) const SizedBox(width: 8),
                         Text(
                           'No',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 16,
-                            color: selectedAnswers[question.questionId] == false 
-                                ? Colors.white 
-                                : Colors.black87,
+                            color: !isChecked ? Colors.white : Colors.black87,
                           ),
                         ),
                       ],
@@ -197,10 +244,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-         Html(
-          data:   question.questionText,
-        
-        ),
+        Html(data: question.questionText),
         // Text(
         //   question.questionText,
         //   style: const TextStyle(
@@ -215,7 +259,9 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
           onChanged: (value) => _handleAnswerChange(question.questionId, value),
           decoration: InputDecoration(
             hintText: 'Enter your answer here...',
-            hintStyle: FontHelper.ts14w400(color: AppColors.kcButtonDisabledColor),
+            hintStyle: FontHelper.ts14w400(
+              color: AppColors.kcButtonDisabledColor,
+            ),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(
@@ -224,7 +270,10 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppColors.kcPrimaryAccentColor, width: 2),
+              borderSide: BorderSide(
+                color: AppColors.kcPrimaryAccentColor,
+                width: 2,
+              ),
             ),
           ),
         ),
@@ -245,12 +294,13 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        ...question.options.map((option) => 
-          RadioListTile<String>(
+        ...question.options.map(
+          (option) => RadioListTile<String>(
             title: Text(option),
             value: option,
             groupValue: selectedAnswers[question.questionId],
-            onChanged: (value) => _handleAnswerChange(question.questionId, value),
+            onChanged: (value) =>
+                _handleAnswerChange(question.questionId, value),
             activeColor: AppColors.kcPrimaryAccentColor,
           ),
         ),
@@ -334,15 +384,15 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                     width: currentPage == i ? 12 : 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: currentPage == i 
-                          ? AppColors.kcPrimaryAccentColor 
+                      color: currentPage == i
+                          ? AppColors.kcPrimaryAccentColor
                           : Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
               ],
             ),
-          
+
           const SizedBox(height: 16),
 
           // PageView for questions
@@ -374,10 +424,13 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.grey.shade200,
                       foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
-                  
+
                   // Next button
                   ElevatedButton.icon(
                     onPressed: currentPage < questions.length - 1
@@ -394,7 +447,10 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.kcPrimaryAccentColor,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -415,6 +471,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
   Widget _buildPageView(List<InspectionQuestion> questions) {
     return PageView.builder(
       controller: _pageController,
+      physics: const NeverScrollableScrollPhysics(),
       onPageChanged: (index) {
         setState(() {
           currentPage = index;
@@ -437,7 +494,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withAlpha(70),
             spreadRadius: 1,
             blurRadius: 6,
             offset: const Offset(0, 3),
@@ -457,7 +514,10 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
               ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16),
+              padding: const EdgeInsets.symmetric(
+                vertical: 12.0,
+                horizontal: 16,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -484,7 +544,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
               ),
             ),
           ),
-          
+
           Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -492,11 +552,11 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
               children: [
                 // Dynamic question widget based on type
                 _buildQuestionWidget(question),
-                
+
                 const SizedBox(height: 20),
                 const Divider(thickness: 1),
                 const SizedBox(height: 20),
-            
+
                 // Attach Evidence
                 const Text(
                   'Attach Evidence',
@@ -511,9 +571,20 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          final pickedFile = await ImagePicker().pickImage(source: ImageSource.camera);
+                          final pickedFile = await ImagePicker().pickImage(
+                            source: ImageSource.camera,
+                          );
                           if (pickedFile != null) {
                             // Handle the captured image
+                            setState(() {
+                              inspectionSubmissions.answers
+                                  .firstWhere(
+                                    (a) => a.questionId == question.questionId,
+                                  )
+                                  .file = File(
+                                pickedFile.path,
+                              );
+                            });
                           }
                         },
                         icon: const Icon(Icons.camera_alt, color: Colors.black),
@@ -534,12 +605,26 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+                          final pickedFile = await ImagePicker().pickImage(
+                            source: ImageSource.gallery,
+                          );
                           if (pickedFile != null) {
-                            // Handle the selected file
+                            // Handle the selected image
+                            setState(() {
+                              inspectionSubmissions.answers
+                                  .firstWhere(
+                                    (a) => a.questionId == question.questionId,
+                                  )
+                                  .file = File(
+                                pickedFile.path,
+                              );
+                            });
                           }
                         },
-                        icon: const Icon(Icons.upload_file, color: Colors.black),
+                        icon: const Icon(
+                          Icons.upload_file,
+                          color: Colors.black,
+                        ),
                         label: const Text(
                           'Upload File',
                           style: TextStyle(color: Colors.black87),
@@ -555,11 +640,11 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                     ),
                   ],
                 ),
-            
+
                 const SizedBox(height: 20),
                 const Divider(thickness: 1),
                 const SizedBox(height: 20),
-            
+
                 // Additional Notes
                 const Text(
                   'Additional Notes',
@@ -571,10 +656,13 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                 const SizedBox(height: 8),
                 TextField(
                   maxLines: 3,
-                  onChanged: (value) => _handleNotesChange(question.questionId, value),
+                  onChanged: (value) =>
+                      _handleNotesChange(question.questionId, value),
                   decoration: InputDecoration(
                     hintText: 'Write any additional notes here...',
-                    hintStyle: FontHelper.ts14w400(color: AppColors.kcButtonDisabledColor),
+                    hintStyle: FontHelper.ts14w400(
+                      color: AppColors.kcButtonDisabledColor,
+                    ),
                     filled: true,
                     fillColor: Colors.white,
                     border: OutlineInputBorder(

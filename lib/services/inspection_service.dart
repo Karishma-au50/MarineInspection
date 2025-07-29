@@ -6,35 +6,36 @@ import '../../../core/model/response_model.dart';
 import '../../../models/inspection_template.dart';
 import '../shared/services/storage_service.dart';
 
-
-
 class InspectionEndpoint {
   static const String getTemplate = 'api/inspections/templates/complete-marine';
   static const String submitAnswers = 'api/inspection-submission';
 }
 
-class InspectionService extends BaseApiService{
- /// Fetch inspection template from API
-    Future<ResponseModel> getInspectionTemplate() async {
-    final res = await get(InspectionEndpoint.getTemplate,
-     options: Options(
+class InspectionService extends BaseApiService {
+  /// Fetch inspection template from API
+  Future<ResponseModel<InspectionTemplate?>> getInspectionTemplate() async {
+    final res = await get(
+      InspectionEndpoint.getTemplate,
+      options: Options(
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${StorageService.instance.getToken()}',
         },
-     )
+      ),
     );
-    ResponseModel resModel = ResponseModel<InspectionTemplate>(
-      message: res.data["message"],
-      status: res.data["statusCode"],
-      data: InspectionTemplate.fromJson(res.data["data"]),
-    );
+    ResponseModel<InspectionTemplate?> resModel =
+        ResponseModel<InspectionTemplate?>(
+          message: res.data["message"],
+          status: res.data["statusCode"] >= 200 && res.data["statusCode"] < 300,
+          data: InspectionTemplate.fromJson(res.data["data"]),
+        );
     return resModel;
   }
+
   /// Submit inspection answers to API
   Future<ResponseModel> submitInspectionAnswers({
-  String? templateId,
-  Map<String, dynamic>? answers,
+    String? templateId,
+    Map<String, dynamic>? answers,
   }) async {
     final res = await post(
       InspectionEndpoint.submitAnswers,
@@ -51,12 +52,13 @@ class InspectionService extends BaseApiService{
     );
     return resModel;
   }
+
   /// Mock data for development/testing (remove when API is ready)
   /// This method simulates a network call and returns a mock inspection template.
-  // Future<InspectionTemplate?> getMockInspectionTemplate() async { 
+  // Future<InspectionTemplate?> getMockInspectionTemplate() async {
   //   // Simulate network delay
   //   await Future.delayed(const Duration(seconds: 1));
-    
+
   //   final mockResponse = {
   //     "statusCode": 200,
   //     "data": {
@@ -122,7 +124,7 @@ class InspectionService extends BaseApiService{
   //       mockResponse,
   //       (data) => InspectionTemplate.fromJson(data),
   //     );
-      
+
   //     if (!apiResponse.error) {
   //       return apiResponse.data;
   //     }
@@ -153,7 +155,7 @@ class InspectionService extends BaseApiService{
   //         jsonData,
   //         (data) => InspectionTemplate.fromJson(data),
   //       );
-        
+
   //       if (!apiResponse.error) {
   //         return apiResponse.data;
   //       } else {
@@ -169,7 +171,6 @@ class InspectionService extends BaseApiService{
   //     return null;
   //   }
   // }
-
 }
 
 

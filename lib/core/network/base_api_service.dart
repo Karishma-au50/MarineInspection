@@ -13,33 +13,31 @@ class RestClient {
     dio = Dio(
       BaseOptions(
         baseUrl: AppConstants.baseUrl,
-        headers: {
-          HttpHeaders.contentTypeHeader: "application/json",
-        },
+        headers: {HttpHeaders.contentTypeHeader: "application/json"},
       ),
     );
-    dio.interceptors.add(
-      InterceptorsWrapper(
-        onError: (error, handler) async {
-          // Log.error('DIO ERROR: ${error.toString()}');
-          // if (error.error is SocketException) {
-          //   await GoRouter.of(rootNavigatorKey.currentContext!)
-          //       .push(AppRoutes.interet);
-          //   final res = await dio.request(
-          //     error.requestOptions.path,
-          //     data: error.requestOptions.data,
-          //     options: Options(
-          //       method: error.requestOptions.method,
-          //       headers: error.requestOptions.headers,
-          //     ),
-          //   );
-          //   handler.resolve(res);
-          // } else {
-          //   handler.reject(error);
-          // }
-        },
-      ),
-    );
+    // dio.interceptors.add(
+    //   InterceptorsWrapper(
+    //     onError: (error, handler) async {
+    //       // Log.error('DIO ERROR: ${error.toString()}');
+    //       // if (error.error is SocketException) {
+    //       //   await GoRouter.of(rootNavigatorKey.currentContext!)
+    //       //       .push(AppRoutes.interet);
+    //       //   final res = await dio.request(
+    //       //     error.requestOptions.path,
+    //       //     data: error.requestOptions.data,
+    //       //     options: Options(
+    //       //       method: error.requestOptions.method,
+    //       //       headers: error.requestOptions.headers,
+    //       //     ),
+    //       //   );
+    //       //   handler.resolve(res);
+    //       // } else {
+    //       //   handler.reject(error);
+    //       // }
+    //     },
+    //   ),
+    // );
   }
 
   late final Dio dio;
@@ -139,24 +137,34 @@ abstract class BaseApiService {
     if (error is DioException) {
       // Log.error(
       //     'DIO ERROR: ${error.type} ENDPOINT: ${error.requestOptions.baseUrl} - ${error.requestOptions.path}');
-     
+
       switch (error.type) {
         case DioExceptionType.cancel:
           throw RequestCancelledException(
-              001, 'Something went wrong. Please try again.');
+            001,
+            'Something went wrong. Please try again.',
+          );
         case DioExceptionType.connectionTimeout:
           throw RequestTimeoutException(
-              408, 'Could not connect to the server.');
+            408,
+            'Could not connect to the server.',
+          );
         case DioExceptionType.connectionError ||
-              DioExceptionType.badCertificate:
+            DioExceptionType.badCertificate:
           throw DefaultException(
-              002, 'Something went wrong. Please try again.');
+            002,
+            'Something went wrong. Please try again.',
+          );
         case DioExceptionType.receiveTimeout:
           throw ReceiveTimeoutException(
-              004, 'Could not connect to the server.');
+            004,
+            'Could not connect to the server.',
+          );
         case DioExceptionType.sendTimeout:
           throw RequestTimeoutException(
-              408, 'Could not connect to the server.');
+            408,
+            'Could not connect to the server.',
+          );
         case DioExceptionType.unknown:
           final errorMessage = error.response?.data['message'];
           switch (error.response?.statusCode) {
@@ -170,25 +178,37 @@ abstract class BaseApiService {
               throw UnauthorisedException(error.response?.statusCode, message);
             case 404:
               throw NotFoundException(
-                  404, errorMessage ?? error.response?.data.toString());
+                404,
+                errorMessage ?? error.response?.data.toString(),
+              );
             case 409:
               throw ConflictException(
-                  409, 'Something went wrong. Please try again.');
+                409,
+                'Something went wrong. Please try again.',
+              );
             case 408:
               throw RequestTimeoutException(
-                  408, 'Could not connect to the server.');
+                408,
+                'Could not connect to the server.',
+              );
             case 431:
               throw CustomException(431, jsonEncode(error.response?.data), "");
             case 500:
               throw InternalServerException(
-                  500, 'Something went wrong. Please try again.');
+                500,
+                'Something went wrong. Please try again.',
+              );
             default:
-              throw DefaultException(0002,
-                  errorMessage ?? 'Something went wrong. Please try again.');
+              throw DefaultException(
+                0002,
+                errorMessage ?? 'Something went wrong. Please try again.',
+              );
           }
         case DioExceptionType.badResponse:
           throw FetchDataException(
-              000, 'Something went wrong. Please try again.');
+            000,
+            'Something went wrong. Please try again.',
+          );
       }
     } else {
       throw UnexpectedException(000, 'Something went wrong. Please try again.');

@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:marine_inspection/routes/app_pages.dart';
 
@@ -13,18 +14,19 @@ class AuthController extends GetxController {
       final res = await _api.login(mobile: mobile, password: password);
       if (res.status ?? false) {
         // Get.offAllNamed(AppPages.home);
-        
+
         MyToasts.toastSuccess(res.message ?? "Success");
         return true;
-      }
-      else {
+      } else {
         MyToasts.toastError(res.message ?? "Login failed");
         return false;
       }
+    } on DioException catch (e) {
+      MyToasts.toastError(e.message ?? "An error occurred");
+      return false;
     } catch (e) {
       MyToasts.toastError(e.toString());
       return false;
     }
   }
-
 }

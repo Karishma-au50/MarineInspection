@@ -1,7 +1,6 @@
-
 import 'package:flutter/material.dart';
+import 'package:marine_inspection/models/inspection_template.dart';
 
-import '../../../models/inspection_models.dart';
 import '../../../shared/constant/font_helper.dart' show FontHelper;
 
 class InspectionCard extends StatelessWidget {
