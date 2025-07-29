@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:marine_inspection/core/network/base_api_service.dart';
 import '../../../core/model/response_model.dart';
 import '../../../models/inspection_template.dart';
-import '../shared/services/storage_service.dart';
 
 
 
@@ -16,25 +14,18 @@ class InspectionEndpoint {
 class InspectionService extends BaseApiService{
  /// Fetch inspection template from API
     Future<ResponseModel> getInspectionTemplate() async {
-    final res = await get(InspectionEndpoint.getTemplate,
-     options: Options(
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${StorageService.instance.getToken()}',
-        },
-     )
-    );
+    final res = await get(InspectionEndpoint.getTemplate);
     ResponseModel resModel = ResponseModel<InspectionTemplate>(
       message: res.data["message"],
-      status: res.data["statusCode"],
+      status: res.data["status"],
       data: InspectionTemplate.fromJson(res.data["data"]),
     );
     return resModel;
   }
   /// Submit inspection answers to API
   Future<ResponseModel> submitInspectionAnswers({
-  String? templateId,
-  Map<String, dynamic>? answers,
+    required String templateId,
+    required Map<String, dynamic> answers,
   }) async {
     final res = await post(
       InspectionEndpoint.submitAnswers,

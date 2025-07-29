@@ -3,7 +3,7 @@ import 'package:marine_inspection/routes/app_pages.dart';
 import '../features/Splash/splash_screen.dart';
 import '../features/Auth/login_screen.dart';
 import '../features/Home/home_screen.dart';
-import '../features/Inspections/inspections_screen.dart';
+import '../features/Inspections/view/inspections_screen.dart';
 import '../features/Reports/reports_screen.dart';
 import '../features/Profile/profile_screen.dart';
 import '../features/QuestionAnswer/dynamic_question_answer_screen.dart';

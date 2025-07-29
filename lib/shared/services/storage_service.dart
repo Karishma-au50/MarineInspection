@@ -24,7 +24,7 @@ class StorageService {
       _preferences!.setString('token', value);
 
   // get token
-  String? getToken() => _preferences!.getString('token');
+  String? getToken() => _preferences?.getString('token');
 
   // add more methods here
   UserModel? getUserId() {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:marine_inspection/shared/constant/default_appbar.dart';
 import 'package:marine_inspection/shared/constant/font_helper.dart';
@@ -196,14 +197,18 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          question.questionText,
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.4,
-            fontWeight: FontWeight.w500,
-          ),
+         Html(
+          data:   question.questionText,
+        
         ),
+        // Text(
+        //   question.questionText,
+        //   style: const TextStyle(
+        //     fontSize: 15,
+        //     height: 1.4,
+        //     fontWeight: FontWeight.w500,
+        //   ),
+        // ),
         const SizedBox(height: 16),
         TextField(
           maxLines: 3,

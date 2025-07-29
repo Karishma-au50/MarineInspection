@@ -19,8 +19,8 @@ class AuthController extends GetxController {
       }
       else {
         MyToasts.toastError(res.message ?? "Login failed");
+        return false;
       }
-      return false;
     } catch (e) {
       MyToasts.toastError(e.toString());
       return false;

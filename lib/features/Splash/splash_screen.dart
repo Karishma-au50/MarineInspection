@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:marine_inspection/shared/services/storage_service.dart';
 
 import 'waves.dart';
 
@@ -19,9 +20,19 @@ class _SplashScreenState extends State<SplashScreen> {
 
   _navigateToLogin() async {
     await Future.delayed(const Duration(milliseconds: 5000));
-    if (mounted) {
-      context.go('/login');
+    final token = StorageService.instance.getToken();
+    if (token != null && token.isNotEmpty) {
+      // If token exists, navigate to home
+      if (mounted) {
+        context.go('/home');
+      }
+    } else {
+      // If no token, navigate to login
+      if (mounted) {
+        context.go('/login');
+      }
     }
+  
   }
 
   @override

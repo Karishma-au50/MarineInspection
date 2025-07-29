@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:marine_inspection/features/Auth/controller/auth_controller.dart';
 import '../../routes/app_pages.dart';
-import '../../routes/app_routes.dart';
 import '../../shared/widgets/buttons/my_button.dart';
 import '../../shared/widgets/inputs/my_text_field.dart';
 import '../../shared/constant/app_colors.dart';
@@ -19,7 +18,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
   AuthController controller = Get.isRegistered<AuthController>()
       ? Get.find<AuthController>()
       : Get.put(AuthController());
@@ -29,25 +27,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  void _login() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        await controller.login(
-          mobile: _usernameController.text,
-          password: _passwordController.text,
-        );
-      } catch (e) {
-        // Handle error
-        Get.snackbar(
-          'Error',
-          e.toString(),
-          backgroundColor: Colors.red,
-          colorText: Colors.white,
-        );
-      }
-    }
   }
 
   @override
@@ -111,18 +90,30 @@ class _LoginScreenState extends State<LoginScreen> {
                     text: 'Login',
                     onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        bool res = await controller.login(
-                          mobile: _usernameController.text,
-                          password: _passwordController.text,
-                        );
-                        if (res) {
-                          // Navigate to home page on successful login
-                          if (mounted) GoRouter.of(context).go(AppPages.home);
-                        } else {
-                          // Show error message
+                        try {
+                          bool res = await controller.login(
+                            mobile: _usernameController.text,
+                            password: _passwordController.text,
+                          );
+                          if (res) {
+                            // Navigate to home page on successful login
+                            if (mounted) GoRouter.of(context).go(AppPages.home);
+                          }
+                          else{
+                            // Show error message if login fails
+                            Get.snackbar(
+                              'Login Failed',
+                              'Please check your credentials and try again.',
+                              backgroundColor: Colors.red,
+                              colorText: Colors.white,
+                            );
+                          }
+                          // Error handling is already done in the controller via toast
+                        } catch (e) {
+                          // Additional error handling if needed
                           Get.snackbar(
                             'Login Failed',
-                            'Please check your credentials and try again.',
+                            'An unexpected error occurred. Please try again.',
                             backgroundColor: Colors.red,
                             colorText: Colors.white,
                           );
@@ -130,35 +121,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       }
                     },
                   ),
-
-                  // SizedBox(
-                  //   width: double.infinity,
-                  //   height: 50,
-                  //   child: ElevatedButton(
-                  //     onPressed: _isLoading ? null : _login,
-                  //     style: ElevatedButton.styleFrom(
-                  //       backgroundColor: AppColors.kcPrimaryColor,
-                  //       foregroundColor: Colors.white,
-                  //       disabledBackgroundColor: AppColors.kcButtonDisabledColor,
-                  //       shape: RoundedRectangleBorder(
-                  //         borderRadius: BorderRadius.circular(12),
-                  //       ),
-                  //       elevation: 2,
-                  //     ),
-                  //     child: _isLoading
-                  //         ? const CircularProgressIndicator(
-                  //             valueColor:
-                  //                 AlwaysStoppedAnimation<Color>(Colors.white),
-                  //           )
-                  //         : const Text(
-                  //             'Login',
-                  //             style: TextStyle(
-                  //               fontSize: 16,
-                  //               fontWeight: FontWeight.bold,
-                  //             ),
-                  //           ),
-                  //   ),
-                  // ),
                 ],
               ),
             ),
