@@ -1,24 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../shared/constant/app_colors.dart';
+import '../../shared/constant/font_helper.dart';
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile'),
-        backgroundColor: Colors.blue[900],
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false, // Remove back button
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () => _editProfile(context),
-          ),
-        ],
+         appBar: AppBar(
+        title:  Text('Profile',   style: FontHelper.ts20w700(color: Colors.white),),
+        elevation: 6,
+    backgroundColor: AppColors.kcPrimaryColor,
+    surfaceTintColor: Colors.transparent,
+    shadowColor: Colors.grey.withOpacity(0.1),
       ),
+     
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -27,10 +26,10 @@ class ProfileScreen extends StatelessWidget {
               // Profile Header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.blue[900]!, Colors.blue[700]!],
+                    colors: [AppColors.kcPrimaryColor.withOpacity(0.8), Colors.blue[700]!],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -39,12 +38,12 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 50,
+                      radius: 35,
                       backgroundColor: Colors.white,
                       child: Icon(
                         Icons.person,
                         size: 50,
-                        color: Colors.blue[900],
+                        color: AppColors.kcPrimaryColor,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -56,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    // const SizedBox(height: 8),
                     Text(
                       'Senior Marine Inspector',
                       style: TextStyle(
@@ -89,7 +88,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildStatCard('Years\nExperience', '8', Colors.blue),
+                    child: _buildStatCard('Years\nExperience', '8', AppColors.kcPrimaryColor),
                   ),
                 ],
               ),
@@ -104,21 +103,21 @@ class ProfileScreen extends StatelessWidget {
               ]),
               const SizedBox(height: 20),
 
-              _buildInfoSection('Certifications', [
-                _buildCertificationTile('Marine Safety Inspector', 'Valid until 2025'),
-                _buildCertificationTile('Vessel Systems Expert', 'Valid until 2024'),
-                _buildCertificationTile('Emergency Response', 'Valid until 2026'),
-              ]),
-              const SizedBox(height: 20),
+              // _buildInfoSection('Certifications', [
+              //   _buildCertificationTile('Marine Safety Inspector', 'Valid until 2025'),
+              //   _buildCertificationTile('Vessel Systems Expert', 'Valid until 2024'),
+              //   _buildCertificationTile('Emergency Response', 'Valid until 2026'),
+              // ]),
+              // const SizedBox(height: 20),
 
               // Settings Section
-              _buildInfoSection('Settings', [
-                _buildActionTile('Notifications', Icons.notifications, () => _openNotifications(context)),
-                _buildActionTile('Privacy & Security', Icons.security, () => _openPrivacy(context)),
-                _buildActionTile('Help & Support', Icons.help, () => _openSupport(context)),
-                _buildActionTile('About', Icons.info, () => _openAbout(context)),
-              ]),
-              const SizedBox(height: 20),
+              // _buildInfoSection('Settings', [
+              //   _buildActionTile('Notifications', Icons.notifications, () => _openNotifications(context)),
+              //   _buildActionTile('Privacy & Security', Icons.security, () => _openPrivacy(context)),
+              //   _buildActionTile('Help & Support', Icons.help, () => _openSupport(context)),
+              //   _buildActionTile('About', Icons.info, () => _openAbout(context)),
+              // ]),
+              // const SizedBox(height: 20),
 
               // Logout Button
               SizedBox(

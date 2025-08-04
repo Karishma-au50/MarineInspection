@@ -17,20 +17,16 @@ class _MainShellState extends State<MainShell> {
   int _selectedIndex = 0;
 
   final List<Map<String, dynamic>> _navigationItems = [
-    {
-      'icon': Icons.home,
-      'label': 'Home',
-      'path': '/home',
-    },
+   
     {
       'icon': Icons.assignment,
       'label': 'Inspections',
       'path': '/inspections',
     },
-    {
-      'icon': Icons.analytics,
-      'label': 'Reports',
-      'path': '/reports',
+     {
+      'icon': Icons.home,
+      'label': 'Add Inspection',
+      'path': '/home',
     },
     {
       'icon': Icons.person,

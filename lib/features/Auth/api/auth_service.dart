@@ -20,10 +20,6 @@ class AuthService extends BaseApiService {
       AuthEndpoint.login,
       data: {'phone': mobile, 'password': password},
     );
-    // final res = await Dio().post(
-    //   AppConstants.baseUrl + AuthEndpoint.login,
-    //   data: {'phone': mobile, 'password': password},
-    // );
     Map<String, dynamic> decodedToken = JwtDecoder.decode(
       res.data['data']["token"],
     );

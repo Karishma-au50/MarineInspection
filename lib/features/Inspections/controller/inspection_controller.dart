@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:get/get.dart';
+import 'package:marine_inspection/models/inspection_submission_model.dart';
 import 'package:marine_inspection/models/inspection_template.dart';
 
 import '../../../core/expections/custom_exception.dart';
-import '../../../services/inspection_service.dart';
+import '../../../models/inspection_model.dart';
+import '../services/inspection_service.dart';
 import '../../../shared/widgets/toast/my_toast.dart';
 
 class InspectionController extends GetxController {
@@ -24,40 +26,10 @@ class InspectionController extends GetxController {
     }
   }
 
-  // Future<InspectionTemplate?> getInspectionById(String id) async {
-  //   try {
-  //     final res = await _api.getInspectionById(id);
-  //     if (res.status ?? false) {
-  //       return res.data;
-  //     } else {
-  //       throw FetchDataException(res.message);
-  //     }
-  //   } catch (e) {
-  //     MyToasts.toastError(e.toString());
-  //     return null;
-  //   }
-  // }
-  Future<bool> submitInspection(InspectionTemplate inspection) async {
+  Future<bool> submitInspection(InspectionSubmission inspection) async {
     try {
       final res = await _api.submitInspectionAnswers(
-        templateId: inspection.templateId,
-        answers: {
-          'sections': inspection.sections
-              .map(
-                (section) => {
-                  'sectionId': section.sectionId,
-                  'questions': section.questions
-                      .map(
-                        (q) => {
-                          'questionId': q.questionId,
-                          'answer': q.questionId,
-                        },
-                      )
-                      .toList(),
-                },
-              )
-              .toList(),
-        },
+        inspectionSubmission: inspection,
       );
       if (res.status ?? false) {
         MyToasts.toastSuccess(
@@ -74,19 +46,19 @@ class InspectionController extends GetxController {
     }
   }
 
-  // Future<bool> updateInspection(InspectionTemplate inspection) async {
-  //   try {
-  //     final res = await _api.updateInspection(inspection);
-  //     if (res.status ?? false) {
-  //       MyToasts.toastSuccess(res.message ?? "Inspection updated successfully");
-  //       return true;
-  //     } else {
-  //       MyToasts.toastError(res.message ?? "Failed to update inspection");
-  //       return false;
-  //     }
-  //   } catch (e) {
-  //     MyToasts.toastError(e.toString());
-  //     return false;
-  //   }
-  // }
+  Future<InspectionListResponse?> getInspectionsByUserId(String? userId) async {
+    try {
+      final res = await _api.getInspectionsByUserId(userId);
+      if (res.status ?? false) {
+        return res.data;
+      } else {
+        throw FetchDataException(res.message);
+      }
+    } catch (e) {
+      MyToasts.toastError(e.toString());
+      return null;
+    }
+  }
+
+ 
 }

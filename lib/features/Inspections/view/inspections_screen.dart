@@ -1,100 +1,109 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:get/get.dart';
+import 'package:intl/intl.dart';
+import 'package:marine_inspection/models/inspection_model.dart';
 
-class InspectionsScreen extends StatelessWidget {
+import '../../../shared/constant/app_colors.dart';
+import '../../../shared/constant/font_helper.dart';
+import '../../../shared/widgets/toast/my_toast.dart';
+import '../controller/inspection_controller.dart';
+
+class InspectionsScreen extends StatefulWidget {
   const InspectionsScreen({super.key});
 
   @override
+  State<InspectionsScreen> createState() => _InspectionsScreenState();
+}
+
+class _InspectionsScreenState extends State<InspectionsScreen> {
+    final inspectionController = Get.isRegistered<InspectionController>()
+      ? Get.find<InspectionController>(): Get.put(InspectionController());
+        Rx<InspectionListResponse?> inspectionResponseList = Rx<InspectionListResponse?>(null);
+    final RxBool isLoad = true.obs;
+
+        @override
+  void initState() {
+    super.initState();
+    _loadInspectionListResponse();
+  }
+  Future<void> _loadInspectionListResponse() async {
+    try {
+      print('Loading inspection list...');
+      await inspectionController.getInspectionsByUserId('').then((value) {
+        if (value != null) {
+          inspectionResponseList(value);
+        }
+        isLoad.value = false;
+      });
+    } catch (e) {
+      MyToasts.toastError("Failed to load inspection list: $e");
+      isLoad.value = false;
+    }
+  }
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title: const Text('Inspections'),
-        backgroundColor: Colors.blue[900],
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false, // Remove back button
+        title:  Text('Inspections',   style: FontHelper.ts20w700(color: Colors.white),),
+        elevation: 6,
+    backgroundColor: AppColors.kcPrimaryColor,
+    surfaceTintColor: Colors.transparent,
+    shadowColor: Colors.grey.withOpacity(0.1),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Filter Section
-              Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search inspections...',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+      body: Obx(
+        () {
+          return isLoad.value
+              ? const Center(child: CircularProgressIndicator())
+              : inspectionResponseList.value == null
+                  ? const Center(child: Text('No inspections found'))
+                  : 
+           SafeArea(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildStatCard('Total', inspectionResponseList.value?.summary.total.toString()??"", Colors.blue),
                         ),
-                        filled: true,
-                        fillColor: Colors.grey[100],
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard('Pending', inspectionResponseList.value?.summary.pending.toString()??"", Colors.orange),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _buildStatCard('Completed', inspectionResponseList.value?.summary.completed.toString()??"", Colors.green),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    
+                    // Inspections List
+                    const Text(
+                      'Recent Inspections',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  IconButton(
-                    onPressed: () {
-                      _showFilterDialog(context);
-                    },
-                    icon: const Icon(Icons.filter_list),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.blue[900],
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.all(12),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              // Stats Row
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard('Total', '45', Colors.blue),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard('Pending', '12', Colors.orange),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _buildStatCard('Completed', '33', Colors.green),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              
-              // Inspections List
-              const Text(
-                'Recent Inspections',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                    const SizedBox(height: 16),
+                      ...inspectionResponseList.value!.inspections.map(
+                      (section) =>
+                       _buildInspectionCard(context, section),
+               
+                      )
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: 10,
-                  itemBuilder: (context, index) {
-                    return _buildInspectionCard(context, index);
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        }
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _startNewInspection(context),
-        backgroundColor: Colors.blue[900],
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+    
     );
   }
 
@@ -129,14 +138,34 @@ class InspectionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInspectionCard(BuildContext context, int index) {
-    final statuses = ['Completed', 'Pending', 'In Progress'];
-    final colors = [Colors.green, Colors.orange, Colors.blue];
-    final status = statuses[index % 3];
-    final color = colors[index % 3];
-    
+  Widget _buildInspectionCard(BuildContext context, InspectionModelData section) {
+    String status;
+    if (section.overallStatus == 'in-progress') {
+      status = 'In Progress';
+    } else if (section.overallStatus == 'pending') {
+      status = 'Pending';
+    } else {
+      status = 'Completed';
+    }
+    Color color;
+
+    switch (status) {
+      case 'Completed':
+        color = Colors.green;
+        break;
+      case 'Pending':
+        color = Colors.orange;
+        break;
+      case 'In Progress':
+        color = Colors.blue;
+        break;
+      default:
+        color = Colors.grey;
+    }
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: Colors.white,
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: color.withOpacity(0.1),
@@ -145,124 +174,51 @@ class InspectionsScreen extends StatelessWidget {
             color: color,
           ),
         ),
-        title: Text('Vessel INS-${2024001 + index}'),
+        title: Text(section.templateName,
+          style: TextStyle(
+            fontWeight: FontWeight.w500,
+            // color: color,
+          ),
+        ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Owner: Marine Company ${index + 1}'),
-            const SizedBox(height: 4),
+            // Text('Owner: Marine Company ${section.inspectorId.name}',
+            //   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            // ),
+            // const SizedBox(height: 4),
             Text(
-              'Date: ${DateTime.now().subtract(Duration(days: index)).toString().split(' ')[0]}',
+              'Date: ${DateFormat.yMMMd().format(DateTime.parse(section.inspectionDate))}',
               style: const TextStyle(fontSize: 12),
             ),
+            const SizedBox(height: 4),
+            Text(
+              'Status: $status',
+              style: TextStyle(
+                fontSize: 12,
+                color: color,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            status,
-            style: TextStyle(
-              color: color,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        onTap: () {
-          if (status == 'Pending' || status == 'In Progress') {
-            context.go('/question-answer', extra: 'INS-${2024001 + index}');
-          } else {
-            _showInspectionDetails(context, index);
-          }
-        },
+        // trailing: Container(
+        //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        //   decoration: BoxDecoration(
+        //     color: color.withOpacity(0.1),
+        //     borderRadius: BorderRadius.circular(12),
+        //   ),
+        //   child: Text(
+        //     status,
+        //     style: TextStyle(
+        //       color: color,
+        //       fontSize: 12,
+        //       fontWeight: FontWeight.w500,
+        //     ),
+        //   ),
+        // ),
+       
       ),
-    );
-  }
-
-  void _startNewInspection(BuildContext context) {
-    final inspectionId = 'INS_${DateTime.now().millisecondsSinceEpoch}';
-    context.go('/question-answer', extra: inspectionId);
-  }
-
-  void _showFilterDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Filter Inspections'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CheckboxListTile(
-                title: const Text('Completed'),
-                value: true,
-                onChanged: (value) {},
-              ),
-              CheckboxListTile(
-                title: const Text('Pending'),
-                value: true,
-                onChanged: (value) {},
-              ),
-              CheckboxListTile(
-                title: const Text('In Progress'),
-                value: true,
-                onChanged: (value) {},
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('Clear'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            TextButton(
-              child: const Text('Apply'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showInspectionDetails(BuildContext context, int index) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Inspection INS-${2024001 + index}'),
-          content: const Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Status: Completed'),
-              SizedBox(height: 8),
-              Text('Inspector: John Doe'),
-              SizedBox(height: 8),
-              Text('Duration: 2.5 hours'),
-              SizedBox(height: 8),
-              Text('Score: 95/100'),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: const Text('View Report'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                context.go('/reports');
-              },
-            ),
-            TextButton(
-              child: const Text('Close'),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        );
-      },
     );
   }
 }

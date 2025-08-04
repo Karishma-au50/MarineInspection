@@ -1,8 +1,5 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-import 'package:marine_inspection/routes/app_pages.dart';
-
-import '../../../routes/app_routes.dart';
 import '../../../shared/widgets/toast/my_toast.dart';
 import '../api/auth_service.dart';
 
@@ -22,10 +19,10 @@ class AuthController extends GetxController {
         return false;
       }
     } on DioException catch (e) {
-      MyToasts.toastError(e.message ?? "An error occurred");
+      // MyToasts.toastError(e.message ?? "An error occurred");
       return false;
     } catch (e) {
-      MyToasts.toastError(e.toString());
+      // MyToasts.toastError(e.toString());
       return false;
     }
   }

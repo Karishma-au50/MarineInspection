@@ -102,13 +102,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: AppColors.kcPrimaryColor,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Vessel Type: ${inspectionTemplate.value!.vesselType}',
-                          style: FontHelper.ts12w400(
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
+                      
                         const SizedBox(height: 8),
                         Text(
                           'Please select a section to begin inspection',

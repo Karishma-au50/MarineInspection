@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:marine_inspection/models/inspection_template.dart';
 
-import '../../../shared/constant/font_helper.dart' show FontHelper;
+import '../../../shared/constant/font_helper.dart';
 
-class InspectionCard extends StatelessWidget {
+
+class InspectionCard extends StatefulWidget {
   final InspectionSection section;
 
   const InspectionCard({super.key, required this.section});
+
+  @override
+  State<InspectionCard> createState() => _InspectionCardState();
+}
+
+class _InspectionCardState extends State<InspectionCard> {
+
+
   String _getSectionStatus() {
     return 'Not Started';
   }
@@ -67,7 +76,8 @@ class InspectionCard extends StatelessWidget {
             Container(
               width: 4,
               decoration: BoxDecoration(
-                color: statusColors['border']!,
+                // color: statusColors['border']!,
+                color:Colors.green.shade400,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(18),
                   bottomLeft: Radius.circular(18),
@@ -83,7 +93,7 @@ class InspectionCard extends StatelessWidget {
                   vertical: 0,
                 ),
                 title: Text(
-                  section.sectionName,
+                  widget.section.sectionName,
                   style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
@@ -93,7 +103,7 @@ class InspectionCard extends StatelessWidget {
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 4.0),
                   child: Text(
-                    '${section.questions.length} inspection items',
+                    '${widget.section.questions.length} inspection items',
                     style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
                 ),

@@ -5,8 +5,9 @@ import 'inspection_answer_model.dart';
 class InspectionSubmission {
   final List<InspectionAnswer> answers;
   final DateTime inspectionDate;
+  final String sectionId;
 
-  InspectionSubmission({required this.answers, required this.inspectionDate});
+  InspectionSubmission({required this.answers, required this.inspectionDate, required this.sectionId});
 
   Future<FormData> toFormData() async {
     final formMap = <String, dynamic>{};
