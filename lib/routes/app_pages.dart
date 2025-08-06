@@ -6,4 +6,5 @@ class AppPages {
   static const String reports = '/reports';
   static const String profile = '/profile';
   static const String questionAnswer = '/question-answer';
+  static const String inspectionDetail = '/inspection-detail';
 }

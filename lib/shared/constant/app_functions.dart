@@ -3,9 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
-import 'package:marine_inspection/model/user_model.dart';
 import 'package:marine_inspection/routes/app_pages.dart';
 
+import '../../models/user_model.dart';
 import '../services/storage_service.dart';
 
 class AppFunctions {

@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:marine_inspection/services/hive_service.dart';
 import 'package:marine_inspection/shared/services/storage_service.dart';
 import 'routes/app_routes.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize any services or dependencies here
-  // For example, you might want to initialize a database or a service locator
-  StorageService.instance.init(); // Uncomment if you have a StorageService
+  
+  // Initialize Hive database
+  await HiveService.init();
+  
+  // Initialize SharedPreferences storage service
+  await StorageService.instance.init();
+  
   runApp(const MyApp());
 }
 

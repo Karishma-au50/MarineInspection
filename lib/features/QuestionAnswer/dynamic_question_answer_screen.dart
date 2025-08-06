@@ -13,13 +13,15 @@ import 'package:marine_inspection/models/inspection_template.dart';
 
 import '../../models/inspection_answer_model.dart';
 import '../../models/inspection_submission_model.dart';
+import '../../services/hive_service.dart';
 import '../../shared/constant/app_colors.dart';
 
 class QuestionAnswerScreen extends StatefulWidget {
   final InspectionSection? section;
   final String? templateId;
+  final String? inspectionId;
 
-  const QuestionAnswerScreen({super.key, this.section, this.templateId});
+  const QuestionAnswerScreen({super.key, this.section, this.templateId, this.inspectionId});
 
   @override
   State<QuestionAnswerScreen> createState() => _QuestionAnswerScreenState();
@@ -32,6 +34,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
     answers: [],
     inspectionDate: DateTime.now(),
     sectionId: "",
+    inspectionId: "",
   );
   final InspectionController inspectionController =
       Get.isRegistered<InspectionController>()
@@ -47,22 +50,34 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
   @override
   void initState() {
     super.initState();
-    inspectionSubmissions = InspectionSubmission(
-      answers:
-          widget.section?.questions
-              .map(
-                (q) => InspectionAnswer(
-                  questionId: q.questionId,
-                  answer: q.questionType,
-                  satisfied: 'no',
-                  comments: '',
-                ),
-              )
-              .toList() ??
-          [],
-      inspectionDate: DateTime.now(),
-      sectionId: widget.section?.sectionId ?? '',
-    );
+    HiveService.instance
+        .getInspectionSubmissionsBySectionId(widget.section?.sectionId ?? '')
+        .then((value) {
+          if (value != null) {
+            inspectionSubmissions = value;
+          } else {
+            inspectionSubmissions = InspectionSubmission(
+              answers:
+                  widget.section?.questions
+                      .map(
+                        (q) => InspectionAnswer(
+                          questionId: q.questionId,
+                          answer: q.questionType,
+                          satisfied: '',
+                          comments: '',
+                        ),
+                      )
+                      .toList() ??
+                  [],
+              inspectionDate: DateTime.now(),
+              sectionId: widget.section?.sectionId ?? '',
+              inspectionId: widget.inspectionId ?? '',
+            );
+          }
+          setState(() {
+            
+          });
+        });
   }
 
   @override
@@ -88,7 +103,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
   void _handleNotesChange(String questionId, String notes) {
     // setState(() {
     //   additionalNotes[questionId] = notes;
-    // }); 
+    // });
 
     // Update the notes in the corresponding submission
     setState(() {
@@ -110,10 +125,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
             children: [
               Center(
                 child: InteractiveViewer(
-                  child: Image.file(
-                    imageFile,
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.file(imageFile, fit: BoxFit.contain),
                 ),
               ),
               Positioned(
@@ -133,7 +145,15 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
 
   bool _isVideoFile(String filePath) {
     final extension = filePath.toLowerCase().split('.').last;
-    return ['mp4', 'mov', 'avi', 'mkv', '3gp', 'webm', 'flv'].contains(extension);
+    return [
+      'mp4',
+      'mov',
+      'avi',
+      'mkv',
+      '3gp',
+      'webm',
+      'flv',
+    ].contains(extension);
   }
 
   Widget _buildQuestionWidget(InspectionQuestion question) {
@@ -150,9 +170,11 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
   }
 
   Widget _buildCheckboxQuestion(InspectionQuestion question) {
-    String isChecked = inspectionSubmissions.answers
-        .firstWhere((a) => a.questionId == question.questionId)
-        .satisfied;
+    String isChecked =
+        inspectionSubmissions.answers
+            .firstWhereOrNull((a) => a.questionId == question.questionId)
+            ?.satisfied ??
+        "";
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +196,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
             SizedBox(
               width: 100,
               child: GestureDetector(
-                onTap: () => _handleAnswerChange(question.questionId, true),
+                onTap: () => _handleAnswerChange(question.questionId, "yes"),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(vertical: 6),
@@ -224,7 +246,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
             SizedBox(
               width: 100,
               child: GestureDetector(
-                onTap: () => _handleAnswerChange(question.questionId, false),
+                onTap: () => _handleAnswerChange(question.questionId, "no"),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   padding: const EdgeInsets.symmetric(vertical: 6),
@@ -512,11 +534,18 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                   // Next button
                   ElevatedButton.icon(
                     onPressed: currentPage < questions.length - 1
-                        ? () {
+                        ? () async {
                             _pageController.nextPage(
                               duration: const Duration(milliseconds: 300),
                               curve: Curves.easeInOut,
                             );
+                            HiveService.instance.saveInspectionSubmission(
+                              inspectionSubmissions,
+                            );
+
+                            var data = await HiveService.instance
+                                .getAllInspectionSubmissions();
+                            print(data);
                           }
                         : () async {
                             var res = await inspectionController
@@ -668,17 +697,29 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                               if (pickedFile != null) {
                                 setState(() {
                                   inspectionSubmissions.answers
-                                      .firstWhere((a) => a.questionId == question.questionId)
-                                      .files.add(File(pickedFile.path));
+                                      .firstWhere(
+                                        (a) =>
+                                            a.questionId == question.questionId,
+                                      )
+                                      .files
+                                      .add(File(pickedFile.path));
                                 });
                               }
                             },
-                            icon: const Icon(Icons.camera_alt, color: Colors.black),
-                            label: const Text('Take Photo', style: TextStyle(color: Colors.black87)),
+                            icon: const Icon(
+                              Icons.camera_alt,
+                              color: Colors.black,
+                            ),
+                            label: const Text(
+                              'Take Photo',
+                              style: TextStyle(color: Colors.black87),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey.shade200,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
@@ -692,17 +733,29 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                               if (pickedFile != null) {
                                 setState(() {
                                   inspectionSubmissions.answers
-                                      .firstWhere((a) => a.questionId == question.questionId)
-                                      .files.add(File(pickedFile.path));
+                                      .firstWhere(
+                                        (a) =>
+                                            a.questionId == question.questionId,
+                                      )
+                                      .files
+                                      .add(File(pickedFile.path));
                                 });
                               }
                             },
-                            icon: const Icon(Icons.photo_library, color: Colors.black),
-                            label: const Text('Gallery', style: TextStyle(color: Colors.black87)),
+                            icon: const Icon(
+                              Icons.photo_library,
+                              color: Colors.black,
+                            ),
+                            label: const Text(
+                              'Gallery',
+                              style: TextStyle(color: Colors.black87),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.grey.shade200,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
@@ -720,17 +773,29 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                               if (pickedFile != null) {
                                 setState(() {
                                   inspectionSubmissions.answers
-                                      .firstWhere((a) => a.questionId == question.questionId)
-                                      .files.add(File(pickedFile.path));
+                                      .firstWhere(
+                                        (a) =>
+                                            a.questionId == question.questionId,
+                                      )
+                                      .files
+                                      .add(File(pickedFile.path));
                                 });
                               }
                             },
-                            icon: const Icon(Icons.videocam, color: Colors.white),
-                            label: const Text('Record Video', style: TextStyle(color: Colors.white)),
+                            icon: const Icon(
+                              Icons.videocam,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Record Video',
+                              style: TextStyle(color: Colors.white),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red.shade600,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
@@ -744,17 +809,29 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                               if (pickedFile != null) {
                                 setState(() {
                                   inspectionSubmissions.answers
-                                      .firstWhere((a) => a.questionId == question.questionId)
-                                      .files.add(File(pickedFile.path));
+                                      .firstWhere(
+                                        (a) =>
+                                            a.questionId == question.questionId,
+                                      )
+                                      .files
+                                      .add(File(pickedFile.path));
                                 });
                               }
                             },
-                            icon: const Icon(Icons.video_library, color: Colors.white),
-                            label: const Text('Video Gallery', style: TextStyle(color: Colors.white)),
+                            icon: const Icon(
+                              Icons.video_library,
+                              color: Colors.white,
+                            ),
+                            label: const Text(
+                              'Video Gallery',
+                              style: TextStyle(color: Colors.white),
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue.shade600,
                               padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
                           ),
                         ),
@@ -766,26 +843,39 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                       width: double.infinity,
                       child: ElevatedButton.icon(
                         onPressed: () async {
-                          final pickedFiles = await ImagePicker().pickMultiImage();
+                          final pickedFiles = await ImagePicker()
+                              .pickMultiImage();
                           if (pickedFiles.isNotEmpty) {
                             setState(() {
                               final answerIndex = inspectionSubmissions.answers
-                                  .indexWhere((a) => a.questionId == question.questionId);
+                                  .indexWhere(
+                                    (a) => a.questionId == question.questionId,
+                                  );
                               if (answerIndex != -1) {
                                 for (var pickedFile in pickedFiles) {
-                                  inspectionSubmissions.answers[answerIndex].files
+                                  inspectionSubmissions
+                                      .answers[answerIndex]
+                                      .files
                                       .add(File(pickedFile.path));
                                 }
                               }
                             });
                           }
                         },
-                        icon: const Icon(Icons.photo_library_outlined, color: Colors.black),
-                        label: const Text('Select Multiple Photos', style: TextStyle(color: Colors.black87)),
+                        icon: const Icon(
+                          Icons.photo_library_outlined,
+                          color: Colors.black,
+                        ),
+                        label: const Text(
+                          'Select Multiple Photos',
+                          style: TextStyle(color: Colors.black87),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade100,
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
@@ -794,8 +884,12 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
 
                 // Display uploaded media (images and videos)
                 if (inspectionSubmissions.answers
-                    .firstWhere((a) => a.questionId == question.questionId)
-                    .files.isNotEmpty)
+                        .firstWhereOrNull(
+                          (a) => a.questionId == question.questionId,
+                        )
+                        ?.files
+                        .isNotEmpty ??
+                    false)
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -814,14 +908,28 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                             onPressed: () {
                               setState(() {
                                 inspectionSubmissions.answers
-                                    .firstWhere((a) => a.questionId == question.questionId)
-                                    .files.clear();
+                                    .firstWhere(
+                                      (a) =>
+                                          a.questionId == question.questionId,
+                                    )
+                                    .files
+                                    .clear();
                               });
                             },
-                            icon: const Icon(Icons.clear_all, size: 16, color: Colors.red),
-                            label: const Text('Clear All', style: TextStyle(color: Colors.red, fontSize: 12)),
+                            icon: const Icon(
+                              Icons.clear_all,
+                              size: 16,
+                              color: Colors.red,
+                            ),
+                            label: const Text(
+                              'Clear All',
+                              style: TextStyle(color: Colors.red, fontSize: 12),
+                            ),
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
@@ -832,22 +940,28 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                       GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 1,
-                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                              childAspectRatio: 1,
+                            ),
                         itemCount: inspectionSubmissions.answers
-                            .firstWhere((a) => a.questionId == question.questionId)
-                            .files.length,
+                            .firstWhere(
+                              (a) => a.questionId == question.questionId,
+                            )
+                            .files
+                            .length,
                         itemBuilder: (context, fileIndex) {
                           final file = inspectionSubmissions.answers
-                              .firstWhere((a) => a.questionId == question.questionId)
+                              .firstWhere(
+                                (a) => a.questionId == question.questionId,
+                              )
                               .files[fileIndex];
-                          
+
                           final isVideo = _isVideoFile(file.path);
-                          
+
                           return Container(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade100,
@@ -859,8 +973,14 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                                 GestureDetector(
                                   onTap: () {
                                     if (isVideo) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('Video preview functionality can be added here')),
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            'Video preview functionality can be added here',
+                                          ),
+                                        ),
                                       );
                                     } else {
                                       _showFullScreenImage(file);
@@ -894,7 +1014,10 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                                   top: 4,
                                   left: 4,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: isVideo ? Colors.red : Colors.blue,
                                       borderRadius: BorderRadius.circular(4),
@@ -917,8 +1040,13 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                                     onTap: () {
                                       setState(() {
                                         inspectionSubmissions.answers
-                                            .firstWhere((a) => a.questionId == question.questionId)
-                                            .files.removeAt(fileIndex);
+                                            .firstWhere(
+                                              (a) =>
+                                                  a.questionId ==
+                                                  question.questionId,
+                                            )
+                                            .files
+                                            .removeAt(fileIndex);
                                       });
                                     },
                                     child: Container(
@@ -927,7 +1055,11 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                                         color: Colors.red,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.close, color: Colors.white, size: 16),
+                                      child: const Icon(
+                                        Icons.close,
+                                        color: Colors.white,
+                                        size: 16,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -937,7 +1069,10 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                                   left: 0,
                                   right: 0,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.black.withOpacity(0.7),
                                       borderRadius: const BorderRadius.only(
@@ -947,7 +1082,11 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                                     ),
                                     child: Text(
                                       file.path.split('/').last,
-                                      style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w500),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                       textAlign: TextAlign.center,
                                       overflow: TextOverflow.ellipsis,
                                     ),

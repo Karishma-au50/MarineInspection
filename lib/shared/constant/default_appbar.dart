@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:marine_inspection/shared/constant/font_helper.dart';
 import 'app_colors.dart';
 
-AppBar defaultAppBar(BuildContext context,{bool isLeading = false}) {
+AppBar defaultAppBar(BuildContext context,{String? title,bool isLeading = false}) {
   return AppBar(
     elevation: 6,
     backgroundColor: AppColors.kcPrimaryColor,
@@ -11,14 +11,8 @@ AppBar defaultAppBar(BuildContext context,{bool isLeading = false}) {
     shadowColor: Colors.grey.withOpacity(0.1),
     title:  Row(
       children: [
-           Icon(
-              Icons.directions_boat,
-              size: 30,
-              color: AppColors.kcWhite,
-            ),
-        const SizedBox(width: 15),
         Text(
-          'Marine Inspection',
+          title??'PSC inspection checks',
           style: FontHelper.ts20w700(color: Colors.white),
         ),
       ],

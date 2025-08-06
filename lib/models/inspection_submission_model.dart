@@ -1,13 +1,23 @@
 import 'package:dio/dio.dart';
+import 'package:hive/hive.dart';
 
 import 'inspection_answer_model.dart';
 
-class InspectionSubmission {
-  final List<InspectionAnswer> answers;
-  final DateTime inspectionDate;
-  final String sectionId;
+part 'inspection_submission_model.g.dart';
 
-  InspectionSubmission({required this.answers, required this.inspectionDate, required this.sectionId});
+@HiveType(typeId: 0)
+class InspectionSubmission {
+  @HiveField(0)
+  final List<InspectionAnswer> answers;
+  @HiveField(1)
+  final DateTime inspectionDate;
+  @HiveField(2)
+  final String sectionId;
+  @HiveField(3)
+  String? inspectionId;
+  
+
+  InspectionSubmission({required this.answers, required this.inspectionDate, required this.sectionId, this.inspectionId});
 
   Future<FormData> toFormData() async {
     final formMap = <String, dynamic>{};

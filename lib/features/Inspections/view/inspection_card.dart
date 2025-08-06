@@ -6,8 +6,13 @@ import '../../../shared/constant/font_helper.dart';
 
 class InspectionCard extends StatefulWidget {
   final InspectionSection section;
+  final String? status;
 
-  const InspectionCard({super.key, required this.section});
+  const InspectionCard({
+    super.key, 
+    required this.section,
+    this.status,
+  });
 
   @override
   State<InspectionCard> createState() => _InspectionCardState();
@@ -15,9 +20,8 @@ class InspectionCard extends StatefulWidget {
 
 class _InspectionCardState extends State<InspectionCard> {
 
-
   String _getSectionStatus() {
-    return 'Not Started';
+    return widget.status ?? 'Not Started';
   }
 
   // Helper method to get colors based on status
@@ -76,8 +80,7 @@ class _InspectionCardState extends State<InspectionCard> {
             Container(
               width: 4,
               decoration: BoxDecoration(
-                // color: statusColors['border']!,
-                color:Colors.green.shade400,
+                color: statusColors['border']!,
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(18),
                   bottomLeft: Radius.circular(18),

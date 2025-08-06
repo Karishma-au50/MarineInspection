@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:marine_inspection/models/inspection_model.dart';
 
+import '../../../routes/app_pages.dart';
 import '../../../shared/constant/app_colors.dart';
 import '../../../shared/constant/font_helper.dart';
 import '../../../shared/widgets/toast/my_toast.dart';
@@ -45,7 +47,7 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
-        title:  Text('Inspections',   style: FontHelper.ts20w700(color: Colors.white),),
+        title:  Text('All Inspections',   style: FontHelper.ts20w700(color: Colors.white),),
         elevation: 6,
     backgroundColor: AppColors.kcPrimaryColor,
     surfaceTintColor: Colors.transparent,
@@ -55,7 +57,7 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
         () {
           return isLoad.value
               ? const Center(child: CircularProgressIndicator())
-              : inspectionResponseList.value == null
+              : inspectionResponseList.value == null || inspectionResponseList.value!.inspections.isEmpty
                   ? const Center(child: Text('No inspections found'))
                   : 
            SafeArea(
@@ -65,31 +67,6 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildStatCard('Total', inspectionResponseList.value?.summary.total.toString()??"", Colors.blue),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildStatCard('Pending', inspectionResponseList.value?.summary.pending.toString()??"", Colors.orange),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _buildStatCard('Completed', inspectionResponseList.value?.summary.completed.toString()??"", Colors.green),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 20),
-                    
-                    // Inspections List
-                    const Text(
-                      'Recent Inspections',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
                     const SizedBox(height: 16),
                       ...inspectionResponseList.value!.inspections.map(
                       (section) =>
@@ -107,36 +84,6 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
     );
   }
 
-  Widget _buildStatCard(String title, String count, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            count,
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
   Widget _buildInspectionCard(BuildContext context, InspectionModelData section) {
     String status;
@@ -163,61 +110,52 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
         color = Colors.grey;
     }
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: Colors.white,
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
-          child: Icon(
-            Icons.directions_boat,
-            color: color,
-          ),
-        ),
-        title: Text(section.templateName,
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            // color: color,
-          ),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Text('Owner: Marine Company ${section.inspectorId.name}',
-            //   style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            // ),
-            // const SizedBox(height: 4),
-            Text(
-              'Date: ${DateFormat.yMMMd().format(DateTime.parse(section.inspectionDate))}',
-              style: const TextStyle(fontSize: 12),
+    return GestureDetector(
+      onTap: () => {
+          context.push(
+          AppPages.inspectionDetail,
+            extra: section.inspectionId,
+          )
+      
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        color: Colors.white,
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: color.withOpacity(0.1),
+            child: Icon(
+              Icons.directions_boat,
+              color: color,
             ),
-            const SizedBox(height: 4),
-            Text(
-              'Status: $status',
-              style: TextStyle(
-                fontSize: 12,
-                color: color,
-                fontWeight: FontWeight.w500,
+          ),
+          title: Text(section.templateName,
+            style: TextStyle(
+              fontWeight: FontWeight.w500,
+              // color: color,
+            ),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                // show date and time in a readable format
+                'Date: ${DateFormat('dd MMM yyyy, HH:mm').format(DateTime.parse(section.inspectionDate))}',
+                style: const TextStyle(fontSize: 12),
               ),
-            ),
-          ],
-        ),
-        // trailing: Container(
-        //   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        //   decoration: BoxDecoration(
-        //     color: color.withOpacity(0.1),
-        //     borderRadius: BorderRadius.circular(12),
-        //   ),
-        //   child: Text(
-        //     status,
-        //     style: TextStyle(
-        //       color: color,
-        //       fontSize: 12,
-        //       fontWeight: FontWeight.w500,
-        //     ),
-        //   ),
-        // ),
+              const SizedBox(height: 4),
+              Text(
+                'Status: $status',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
        
+        ),
       ),
     );
   }

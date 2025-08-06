@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
-import 'package:marine_inspection/model/user_model.dart';
 import 'package:marine_inspection/shared/constant/app_constants.dart';
 
 import '../../../core/model/response_model.dart';
 import '../../../core/network/base_api_service.dart';
+import '../../../models/user_model.dart';
 import '../../../shared/services/storage_service.dart';
 
 class AuthEndpoint {

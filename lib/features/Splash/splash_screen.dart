@@ -54,14 +54,19 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  Icons.directions_boat,
-                  size: 100,
-                  color: Colors.white,
+                Image.asset(
+                  'assets/icons/logo.png', // Replace with your logo path
+                  width: 100,
+                  height: 100,
                 ),
+                // Icon(
+                //   Icons.directions_boat,
+                //   size: 100,
+                //   color: Colors.white,
+                // ),
                 const SizedBox(height: 20),
                 const Text(
-                  'Marine Inspection',
+                  'PSC inspection checks',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,

@@ -1,12 +1,21 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:hive/hive.dart';
 
+part 'inspection_answer_model.g.dart';
+
+@HiveType(typeId: 1)
 class InspectionAnswer {
+
+  @HiveField(0)
   String questionId;
+  @HiveField(1)
   String answer;
+  @HiveField(2)
   String satisfied;
+  @HiveField(3)
   String? comments;
-  File? file; // Keep for backward compatibility
+  @HiveField(4) 
   List<File> files; // Single list for both images and videos
 
   InspectionAnswer({
@@ -14,7 +23,6 @@ class InspectionAnswer {
     required this.answer,
     required this.satisfied,
     this.comments,
-    this.file,
     List<File>? files,
   }) : files = files ?? [];
 
@@ -37,20 +45,12 @@ class InspectionAnswer {
       }
     }
 
-    // Keep backward compatibility with single file
-    if (file != null && (file?.path.isNotEmpty ?? false)) {
-      formData['files[$index]'] = await MultipartFile.fromFile(
-        file!.path,
-        filename: file!.path.split('/').last,
-      );
-    }
-
     return formData;
   }
 
   @override
   String toString() {
-    return 'InspectionAnswer(questionId: $questionId, answer: $answer, satisfied: $satisfied, comments: $comments, file: ${file?.path}, files: ${files.map((f) => f.path).toList()})';
+    return 'InspectionAnswer(questionId: $questionId, answer: $answer, satisfied: $satisfied, comments: $comments, files: ${files.map((f) => f.path).toList()})';
   }
 
   factory InspectionAnswer.fromJson(Map<String, dynamic> json) {
@@ -71,7 +71,6 @@ class InspectionAnswer {
       answer: json['answer'] ?? '',
       satisfied: json['satisfied'] ?? '',
       comments: json['comments'] ?? '',
-      file: json['file'] != null && json['file'].isNotEmpty ? File(json['file']) : null,
       files: allFiles,
     );
   }
@@ -82,7 +81,6 @@ class InspectionAnswer {
       'answer': answer,
       'satisfied': satisfied,
       'comments': comments,
-      'file': file?.path,
       'files': files.map((f) => f.path).toList(),
     };
   }
