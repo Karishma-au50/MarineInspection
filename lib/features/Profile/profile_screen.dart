@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../routes/app_pages.dart';
 import '../../routes/app_routes.dart';
+import '../../services/hive_service.dart';
 import '../../shared/constant/app_colors.dart';
 import '../../shared/constant/font_helper.dart';
 import '../../shared/services/storage_service.dart';
@@ -12,14 +14,14 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-         appBar: AppBar(
-        title:  Text('Profile',   style: FontHelper.ts20w700(color: Colors.white),),
+      appBar: AppBar(
+        title: Text('Profile', style: FontHelper.ts20w700(color: Colors.white)),
         elevation: 6,
-    backgroundColor: AppColors.kcPrimaryColor,
-    surfaceTintColor: Colors.transparent,
-    shadowColor: Colors.grey.withOpacity(0.1),
+        backgroundColor: AppColors.kcPrimaryColor,
+        surfaceTintColor: Colors.transparent,
+        shadowColor: Colors.grey.withOpacity(0.1),
       ),
-     
+
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
@@ -31,7 +33,10 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.kcPrimaryColor.withOpacity(0.8), Colors.blue[700]!],
+                    colors: [
+                      AppColors.kcPrimaryColor.withOpacity(0.8),
+                      Colors.blue[700]!,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -82,15 +87,27 @@ class ProfileScreen extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: _buildStatCard('Inspections\nCompleted', '247', Colors.green),
+                    child: _buildStatCard(
+                      'Inspections\nCompleted',
+                      '247',
+                      Colors.green,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildStatCard('Average\nRating', '4.8★', Colors.orange),
+                    child: _buildStatCard(
+                      'Average\nRating',
+                      '4.8★',
+                      Colors.orange,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    child: _buildStatCard('Years\nExperience', '8', AppColors.kcPrimaryColor),
+                    child: _buildStatCard(
+                      'Years\nExperience',
+                      '8',
+                      AppColors.kcPrimaryColor,
+                    ),
                   ),
                 ],
               ),
@@ -98,7 +115,11 @@ class ProfileScreen extends StatelessWidget {
 
               // Profile Information
               _buildInfoSection('Personal Information', [
-                _buildInfoTile('Email', 'john.anderson@marine.com', Icons.email),
+                _buildInfoTile(
+                  'Email',
+                  'john.anderson@marine.com',
+                  Icons.email,
+                ),
                 _buildInfoTile('Phone', '+1 (555) 123-4567', Icons.phone),
                 _buildInfoTile('Location', 'Miami, FL', Icons.location_on),
                 _buildInfoTile('License Expiry', 'Dec 31, 2025', Icons.badge),
@@ -186,10 +207,7 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.grey,
-            ),
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
             textAlign: TextAlign.center,
           ),
         ],
@@ -219,10 +237,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           ...children,
@@ -244,10 +259,7 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -286,10 +298,7 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   validity,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
               ],
             ),
@@ -343,7 +352,9 @@ class ProfileScreen extends StatelessWidget {
         color: Colors.blue[900],
       ),
       children: [
-        const Text('Professional marine vessel inspection application for certified inspectors.'),
+        const Text(
+          'Professional marine vessel inspection application for certified inspectors.',
+        ),
       ],
     );
   }
@@ -363,12 +374,9 @@ class ProfileScreen extends StatelessWidget {
             TextButton(
               child: const Text('Logout'),
               onPressed: () {
-                  StorageService.instance.clear();
-                                  // context.go(AppPages);
-                                  // Get.find<DashboardController>().setUser(null);
-                                  // print(AppFunctions.userModel!.toJson());
-                Navigator.of(context).pop();
-                context.go('/login');
+                StorageService.instance.clear();
+                HiveService.instance.clearAllData();
+                context.go(AppPages.login);
               },
             ),
           ],

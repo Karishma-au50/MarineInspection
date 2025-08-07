@@ -1,9 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:go_router/go_router.dart';
-
-import '../../routes/app_pages.dart';
 import '../../shared/constant/app_constants.dart';
 import '../expections/custom_exception.dart';
 import 'dart:async';
@@ -16,28 +13,6 @@ class RestClient {
         headers: {HttpHeaders.contentTypeHeader: "application/json"},
       ),
     );
-    // dio.interceptors.add(
-    //   InterceptorsWrapper(
-    //     onError: (error, handler) async {
-    //       // Log.error('DIO ERROR: ${error.toString()}');
-    //       // if (error.error is SocketException) {
-    //       //   await GoRouter.of(rootNavigatorKey.currentContext!)
-    //       //       .push(AppRoutes.interet);
-    //       //   final res = await dio.request(
-    //       //     error.requestOptions.path,
-    //       //     data: error.requestOptions.data,
-    //       //     options: Options(
-    //       //       method: error.requestOptions.method,
-    //       //       headers: error.requestOptions.headers,
-    //       //     ),
-    //       //   );
-    //       //   handler.resolve(res);
-    //       // } else {
-    //       //   handler.reject(error);
-    //       // }
-    //     },
-    //   ),
-    // );
   }
 
   late final Dio dio;

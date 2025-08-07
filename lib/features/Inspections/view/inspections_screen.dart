@@ -3,11 +3,15 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:marine_inspection/models/inspection_model.dart';
+import 'package:marine_inspection/models/user_management_model.dart';
+import 'package:marine_inspection/models/user_model.dart';
 
 import '../../../routes/app_pages.dart';
 import '../../../shared/constant/app_colors.dart';
 import '../../../shared/constant/font_helper.dart';
+import '../../../shared/services/storage_service.dart';
 import '../../../shared/widgets/toast/my_toast.dart';
+import '../../../utils/utils.dart';
 import '../controller/inspection_controller.dart';
 
 class InspectionsScreen extends StatefulWidget {
@@ -31,7 +35,10 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
   Future<void> _loadInspectionListResponse() async {
     try {
       print('Loading inspection list...');
-      await inspectionController.getInspectionsByUserId('').then((value) {
+      UserModel? userId = StorageService.instance.getUserId();
+      // String userId = StorageService.instance.getUserId()?.id ?? '';
+
+      await inspectionController.getInspectionsByUserId(Utils.isEmployee() ? userId?.id : '').then((value) {
         if (value != null) {
           inspectionResponseList(value);
         }

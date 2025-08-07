@@ -9,6 +9,7 @@ import 'package:marine_inspection/shared/constant/font_helper.dart';
 import 'package:marine_inspection/shared/widgets/buttons/my_button.dart';
 import 'package:marine_inspection/shared/widgets/toast/my_toast.dart';
 import 'package:marine_inspection/services/hive_service.dart';
+import 'package:marine_inspection/widgets/sync_status_widget.dart';
 
 import '../../shared/constant/default_appbar.dart';
 import '../Inspections/view/inspection_card.dart';
@@ -152,6 +153,10 @@ class _HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16.0),
               child: ListView(
                 children: [
+                  // Sync Status Widget
+                  const SyncStatusWidget(showDetails: false),
+                  const SizedBox(height: 16),
+                  
                   Text(
                     'Please select a section to begin inspection.',
                     style: FontHelper.ts14w500(color: Colors.black),

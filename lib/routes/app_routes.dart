@@ -4,12 +4,11 @@ import 'package:marine_inspection/routes/app_pages.dart';
 import '../features/Inspections/view/inspection_detail_screen.dart';
 import '../features/Splash/splash_screen.dart';
 import '../features/Auth/login_screen.dart';
-import '../features/Home/home_screen.dart';
+import '../features/Home/role_based_home_screen.dart';
 import '../features/Inspections/view/inspections_screen.dart';
 import '../features/Reports/reports_screen.dart';
 import '../features/Profile/profile_screen.dart';
 import '../features/QuestionAnswer/dynamic_question_answer_screen.dart';
-import '../models/inspection_template.dart';
 import '../shared/widgets/main_shell.dart';
 
 class AppRoutes {
@@ -47,7 +46,7 @@ class AppRoutes {
           GoRoute(
             path: '/home',
             builder: (context, state) {
-              return HomeScreen(key: UniqueKey());
+              return RoleBasedHomeScreen(key: UniqueKey());
             },
           ),
           GoRoute(
