@@ -5,7 +5,6 @@ import 'package:marine_inspection/shared/constant/app_colors.dart';
 import 'package:marine_inspection/shared/constant/default_appbar.dart';
 
 import '../../../models/inspection_detail_model.dart';
-import '../../../routes/app_pages.dart';
 import '../../../shared/constant/font_helper.dart';
 import '../../../shared/widgets/toast/my_toast.dart';
 import '../controller/inspection_controller.dart';
@@ -73,125 +72,321 @@ class _State extends State<InspectionDetailScreen> {
           return const Center(child: Text('No inspection details available'));
         }
 
-        return Padding(
+        return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Inspection Header Info
+              // _buildInspectionHeader(),
+              // const SizedBox(height: 16),
+              
+           
+              
               ...inspectionDetail.value!.sections.map((section) {
-                return GestureDetector(
-                  onTap: () {
-                    context
-                        .push(
-                          AppPages.questionAnswer,
-                          extra: {
-                            'section': section,
-                            'templateId':
-                                inspectionDetail.value!.inspection.templateId,
-                            'inspectionId':
-                                inspectionDetail.value!.inspection.inspectionId,
-                          },
-                        )
-                        .then((_) {
-                          // Refresh statuses when returning from question screen
-                          // _loadSectionStatuses();
-                        });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(bottom: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.only(
-                        topRight: Radius.circular(18),
-                        bottomRight: Radius.circular(18),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.08),
-                          spreadRadius: 2,
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: IntrinsicHeight(
-                      child: Row(
-                        children: [
-                          // Left rounded border strip
-                          Container(
-                            width: 4,
-                            decoration: BoxDecoration(
-                              color: section.getStatusBorderColor(),
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(18),
-                                bottomLeft: Radius.circular(18),
-                              ),
-                            ),
-                          ),
-
-                          // Main card content
-                          Expanded(
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 0,
-                              ),
-                              title: Text(
-                                section.sectionName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 14,
-                                  color: Colors.black,
-                                ),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Text(
-                                  '${section.answers.length} inspection items',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Status chip
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: section.getStatusBackgroundColor(),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      section.status,
-                                      style: FontHelper.ts12w500(
-                                        color: section.getStatusBorderColor(),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  const Icon(
-                                    Icons.chevron_right,
-                                    color: Colors.grey,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
+                return _buildExpandableSection(section);
               }).toList(),
             ],
           ),
         );
       }),
     );
+  }
+
+  // Widget _buildInspectionHeader() {
+  //   final inspection = inspectionDetail.value!.inspection;
+  //   return Card(
+  //     elevation: 4,
+  //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(16.0),
+  //       child: Column(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           Row(
+  //             children: [
+  //               Icon(
+  //                 Icons.directions_boat,
+  //                 color: AppColors.kcPrimaryColor,
+  //                 size: 28,
+  //               ),
+  //               const SizedBox(width: 12),
+  //               Expanded(
+  //                 child: Text(
+  //                   inspection.templateName,
+  //                   style: FontHelper.ts16w700(color: Colors.black),
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //           const SizedBox(height: 12),
+  //           _buildInfoRow('Inspection ID', inspection.inspectionId),
+  //           _buildInfoRow('Inspector', inspection.inspectorId.name),
+  //           _buildInfoRow('Status', _getStatusText(inspection.overallStatus)),
+  //           _buildInfoRow('Location', inspection.location.isEmpty ? 'Not specified' : inspection.location),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              '$label:',
+              style: FontHelper.ts12w500(color: Colors.grey[600]),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: FontHelper.ts12w400(color: Colors.black),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExpandableSection(InspectionSection section) {
+    return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            spreadRadius: 2,
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+     child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          childrenPadding: const EdgeInsets.only(bottom: 16),
+          
+          leading: Container(
+            width: 4,
+            height: 80,
+            decoration: BoxDecoration(
+              color: _getSectionStatusColor(section.status),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          title: Text(
+            section.sectionName,
+            style: FontHelper.ts14w600(color: Colors.black),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // const SizedBox(height: 2),
+              Text(
+                '${section.answers.length} questions',
+                style: FontHelper.ts12w400(color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getSectionStatusColor(section.status).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  section.status.toUpperCase(),
+                  style: FontHelper.ts10w600(color: _getSectionStatusColor(section.status)),
+                ),
+              ),
+            ],
+          ),
+          children: [
+            if (section.answers.isNotEmpty)
+              ...section.answers.map((answer) => _buildQuestionAnswerCard(answer)).toList()
+            else
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'No questions answered in this section',
+                  style: FontHelper.ts12w400(color: Colors.grey[500]),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuestionAnswerCard(QuestionAnswer answer) {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey[200]!),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Question header
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Question ${answer.questionId}',
+                      style: FontHelper.ts12w600(color: Colors.black),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _cleanHtmlText(answer.questionText),
+                      style: FontHelper.ts12w400(color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                decoration: BoxDecoration(
+                  color: _getAnswerStatusColor(answer.satisfied).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _getAnswerStatusColor(answer.satisfied).withOpacity(0.3)),
+                ),
+                child: Text(
+                  answer.satisfied.toUpperCase(),
+                  style: FontHelper.ts10w600(color: _getAnswerStatusColor(answer.satisfied)),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Comments section
+          if (answer.comments.isNotEmpty) ...[
+            Text(
+              'Comments:',
+              style: FontHelper.ts12w600(color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              answer.comments,
+              style: FontHelper.ts12w400(color: Colors.black),
+            ),
+            const SizedBox(height: 12),
+          ],
+          
+          // File uploads section
+          if (answer.fileUploads.isNotEmpty) ...[
+            Text(
+              'Attachments (${answer.fileUploads.length}):',
+              style: FontHelper.ts12w600(color: Colors.grey[700]),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: answer.fileUploads.map((file) => _buildFileChip(file)).toList(),
+            ),
+          ],
+          
+          // Timestamp
+          const SizedBox(height: 8),
+          Text(
+            'Answered: ${_formatTimestamp(answer.timestamp)}',
+            style: FontHelper.ts10w400(color: Colors.grey[500]),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFileChip(FileUpload file) {
+    final fileName = file.filename ?? file.originalName ?? 'Unknown file';
+    final isImage = file.mimetype?.startsWith('image/') ?? false;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            isImage ? Icons.image : Icons.attach_file,
+            size: 16,
+            color: Colors.blue,
+          ),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              fileName,
+              style: FontHelper.ts10w400(color: Colors.blue),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getSectionStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'completed':
+        return Colors.green;
+      case 'in-progress':
+        return Colors.orange;
+      case 'pending':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Color _getAnswerStatusColor(String satisfied) {
+    switch (satisfied.toLowerCase()) {
+      case 'yes':
+        return Colors.green;
+      case 'no':
+        return Colors.red;
+      case 'notapplicable':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  String _cleanHtmlText(String htmlText) {
+    // Remove HTML tags and decode entities
+    return htmlText
+        .replaceAll(RegExp(r'<[^>]*>'), '')
+        .replaceAll('&#9679;', '•')
+        .replaceAll('&nbsp;', ' ')
+        .trim();
+  }
+
+  String _formatTimestamp(String timestamp) {
+    try {
+      final dateTime = DateTime.parse(timestamp);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return timestamp;
+    }
   }
 }

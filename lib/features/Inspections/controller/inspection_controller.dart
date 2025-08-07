@@ -35,7 +35,7 @@ class InspectionController extends GetxController {
         inspectionSubmission: inspection,
       );
       if (res.status ?? false) {
-        inspection.inspectionId= res.data["inspection"]['inspectionId'];
+        inspection.inspectionId= res.data?["inspection"]['inspectionId'];
         HiveService.instance.saveInspectionSubmission(inspection);
         MyToasts.toastSuccess(
           res.message ?? "Inspection submitted successfully",

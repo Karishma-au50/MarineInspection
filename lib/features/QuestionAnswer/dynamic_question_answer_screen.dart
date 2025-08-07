@@ -548,7 +548,8 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                             print(data);
                           }
                         : () async {
-                            var res = await inspectionController
+                            var res = 
+                            await inspectionController
                                 .submitInspection(inspectionSubmissions);
                             if (res) {
                               // ignore: use_build_context_synchronously

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../routes/app_routes.dart';
 import '../../shared/constant/app_colors.dart';
 import '../../shared/constant/font_helper.dart';
+import '../../shared/services/storage_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -361,6 +363,10 @@ class ProfileScreen extends StatelessWidget {
             TextButton(
               child: const Text('Logout'),
               onPressed: () {
+                  StorageService.instance.clear();
+                                  // context.go(AppPages);
+                                  // Get.find<DashboardController>().setUser(null);
+                                  // print(AppFunctions.userModel!.toJson());
                 Navigator.of(context).pop();
                 context.go('/login');
               },
