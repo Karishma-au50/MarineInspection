@@ -20,8 +20,15 @@ class QuestionAnswerScreen extends StatefulWidget {
   final InspectionSection? section;
   final String? templateId;
   final String? inspectionId;
+  final String? shipName;
 
-  const QuestionAnswerScreen({super.key, this.section, this.templateId, this.inspectionId});
+  const QuestionAnswerScreen({
+    super.key, 
+    this.section, 
+    this.templateId, 
+    this.inspectionId,
+    this.shipName,
+  });
 
   @override
   State<QuestionAnswerScreen> createState() => _QuestionAnswerScreenState();
@@ -35,6 +42,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
     inspectionDate: DateTime.now(),
     sectionId: "",
     inspectionId: "",
+    shipName: "",
   );
   final InspectionController inspectionController =
       Get.isRegistered<InspectionController>()
@@ -55,6 +63,16 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
         .then((value) {
           if (value != null) {
             inspectionSubmissions = value;
+            // Update ship name if provided and not already set
+            if (widget.shipName != null && widget.shipName!.isNotEmpty) {
+              inspectionSubmissions = InspectionSubmission(
+                answers: inspectionSubmissions.answers,
+                inspectionDate: inspectionSubmissions.inspectionDate,
+                sectionId: inspectionSubmissions.sectionId,
+                inspectionId: inspectionSubmissions.inspectionId,
+                shipName: widget.shipName,
+              );
+            }
           } else {
             inspectionSubmissions = InspectionSubmission(
               answers:
@@ -72,6 +90,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
               inspectionDate: DateTime.now(),
               sectionId: widget.section?.sectionId ?? '',
               inspectionId: widget.inspectionId ?? '',
+              shipName: widget.shipName ?? '',
             );
           }
           setState(() {
@@ -211,16 +230,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                           : Colors.grey.shade300,
                       width: isChecked == 'yes' ? 2 : 1,
                     ),
-                    // boxShadow: isChecked == 'yes'
-                    //     ? [
-                    //         BoxShadow(
-                    //           color: Colors.green.withOpacity(0.3),
-                    //           spreadRadius: 1,
-                    //           blurRadius: 4,
-                    //           offset: const Offset(0, 2),
-                    //         ),
-                    //       ]
-                    //     : null,
+                 
                   ),
                   child: Center(
                     child: Row(
@@ -231,7 +241,7 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 16,
-                            color: selectedAnswers[question.questionId] == true
+                            color: isChecked == 'yes'
                                 ? Colors.white
                                 : Colors.black87,
                           ),
@@ -261,28 +271,13 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
                           : Colors.grey.shade300,
                       width: isChecked == 'no' ? 2 : 1,
                     ),
-                    // boxShadow: isChecked == 'no'
-                    //     ? [
-                    //         BoxShadow(
-                    //           color: Colors.red.withOpacity(0.3),
-                    //           spreadRadius: 1,
-                    //           blurRadius: 4,
-                    //           offset: const Offset(0, 2),
-                    //         ),
-                    //       ]
-                    //     : null,
+                 
                   ),
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // if (!isChecked)
-                        // const Icon(
-                        //   Icons.cancel_outlined,
-                        //   color: Colors.white,
-                        //   size: 20,
-                        // ),
-                        // if (!isChecked) const SizedBox(width: 8),
+                     
                         Text(
                           'No',
                           style: TextStyle(
@@ -456,6 +451,27 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.directions_boat,
+                      color: AppColors.kcPrimaryColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        widget.shipName ?? 'Unknown Ship',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: AppColors.kcPrimaryColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Text(
                   section.sectionName,
                   style: const TextStyle(

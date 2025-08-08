@@ -75,10 +75,10 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const SizedBox(height: 16),
+                    
                       ...inspectionResponseList.value!.inspections.map(
                       (section) =>
-                       _buildInspectionCard(context, section),
-               
+                       _buildInspectionCard(context, section,),               
                       )
                   ],
                 ),
@@ -136,11 +136,27 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
               color: color,
             ),
           ),
-          title: Text(section.templateName,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              // color: color,
-            ),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                section.shipName.isNotEmpty ? section.shipName : 'Unknown Ship',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  fontSize: 16
+                ),
+              ),
+                Text(
+                'Inspector: ${section.inspectorId.name}',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            
+            
+            ],
           ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,6 +173,13 @@ class _InspectionsScreenState extends State<InspectionsScreen> {
                   fontSize: 12,
                   color: color,
                   fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(section.templateName,
+                style: TextStyle(
+                  fontWeight: FontWeight.w400,
+                  fontSize: 12,
+                  // color: color,
                 ),
               ),
             ],

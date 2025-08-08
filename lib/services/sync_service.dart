@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:developer';
+import 'package:marine_inspection/shared/services/storage_service.dart';
 import 'package:marine_inspection/utils/network_utils.dart';
 import '../features/Inspections/services/inspection_service.dart';
 import '../models/inspection_submission_model.dart';
+import '../utils/utils.dart';
 import 'hive_service.dart';
 import '../shared/widgets/toast/my_toast.dart';
 
@@ -321,7 +323,8 @@ class SyncService {
     // For example, from StorageService or SharedPreferences
     try {
       // This is a placeholder - replace with your actual user ID retrieval
-      return "current_user_id"; // Replace with actual implementation
+    return  Utils.isEmployee() ? StorageService.instance.getUserId()?.id : null;
+       // Replace with actual implementation
     } catch (e) {
       log('SyncService: Error getting current user ID: $e');
       return null;

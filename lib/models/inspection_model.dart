@@ -34,6 +34,8 @@ class InspectionModelData {
   final String inspectionDate;
   final String startTime;
   final String overallStatus;
+  final String shipName;
+
 
   InspectionModelData({
     required this.id,
@@ -44,6 +46,7 @@ class InspectionModelData {
     required this.inspectionDate,
     required this.startTime,
     required this.overallStatus,
+    this.shipName = '',
   });
 
   factory InspectionModelData.fromJson(Map<String, dynamic> json) {
@@ -56,6 +59,7 @@ class InspectionModelData {
       inspectionDate: json['inspectionDate'] ?? '',
       startTime: json['startTime'] ?? '',
       overallStatus: json['overallStatus'] ?? '',
+      shipName: json['shipName'] ?? '',
     );
   }
 
@@ -69,6 +73,7 @@ class InspectionModelData {
       'inspectionDate': inspectionDate,
       'startTime': startTime,
       'overallStatus': overallStatus,
+      'shipName': shipName,
     };
   }
 

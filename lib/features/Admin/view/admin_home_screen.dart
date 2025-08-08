@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:marine_inspection/shared/constant/default_appbar.dart';
 import '../../../models/user_management_model.dart';
-import '../../../shared/constant/default_appbar.dart';
+import '../../../shared/constant/app_colors.dart';
+import '../../../shared/services/storage_service.dart';
 import '../controller/user_management_controller.dart';
+import '../../Auth/controller/auth_controller.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -12,18 +15,17 @@ class AdminHomeScreen extends StatelessWidget {
     final userController = Get.put(UserManagementController());
 
     return Scaffold(
-      appBar: defaultAppBar(context, title: 'Admin'),
-      backgroundColor: Colors.grey.shade100,
-
+    backgroundColor: Colors.grey.shade100,
+      appBar: defaultAppBar(context, title: 'Admin Management', ),
       body: Column(
         children: [
+        
           // Search Bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14),
+            padding: const EdgeInsets.all(16.0),
             child: TextField(
               decoration: InputDecoration(
-               
-                hintText: 'Search Engineers...',
+                hintText: 'Search users...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: Obx(() {
                   return userController.searchQuery.value.isNotEmpty
@@ -47,7 +49,9 @@ class AdminHomeScreen extends StatelessWidget {
           Expanded(
             child: Obx(() {
               if (userController.isLoading.value) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(
+                  child: CircularProgressIndicator(),
+                );
               }
 
               final filteredUsers = userController.filteredUsers;
@@ -77,7 +81,9 @@ class AdminHomeScreen extends StatelessWidget {
                         userController.searchQuery.value.isNotEmpty
                             ? 'Try a different search term'
                             : 'Add your first user to get started',
-                        style: TextStyle(color: Colors.grey.shade500),
+                        style: TextStyle(
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                     ],
                   ),
@@ -101,7 +107,7 @@ class AdminHomeScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCreateUserDialog(context, userController),
-        backgroundColor: Colors.blue,
+        backgroundColor: AppColors.kcPrimaryColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add),
         label: const Text('Add User'),
@@ -109,36 +115,30 @@ class AdminHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserCard(
-    BuildContext context,
-    User user,
-    UserManagementController controller,
-  ) {
+  Widget _buildUserCard(BuildContext context, User user, UserManagementController controller) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
+     decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: user.role == 'admin'
-                      ? Colors.red
-                      : Colors.blue,
+                  backgroundColor: user.role == 'admin' ? Colors.red : Colors.blue,
                   child: Text(
                     user.name?.substring(0, 1).toUpperCase() ?? 'U',
                     style: const TextStyle(
@@ -166,27 +166,11 @@ class AdminHomeScreen extends StatelessWidget {
                           fontSize: 14,
                         ),
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.phone, size: 14, color: Colors.blue),
-                          const SizedBox(width: 4),
-                          Text(
-                            user.phone ?? 'No phone',
-                            style: TextStyle(
-                              color: Colors.blue,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
                 PopupMenuButton<String>(
-                  onSelected: (value) =>
-                      _handleMenuAction(context, value, user, controller),
+                  onSelected: (value) => _handleMenuAction(context, value, user, controller),
                   itemBuilder: (context) => [
                     const PopupMenuItem(
                       value: 'edit',
@@ -212,8 +196,50 @@ class AdminHomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-          ],
+            const SizedBox(height: 6),
+                 Row(
+              children: [
+                _buildInfoChip(
+                  Icons.phone,
+                  user.phone ?? 'No phone',
+                  Colors.blue,
+                ),
+                const SizedBox(width: 8),
+                _buildInfoChip(
+                  Icons.work,
+                  user.role?.toUpperCase() == 'EMPLOYEE' ? 'ENGINEER' : 'ADMIN',
+                  user.role == 'admin' ? Colors.red : Colors.green,
+                ),
+              ],
+            ),
+         
+        ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -234,10 +260,7 @@ class AdminHomeScreen extends StatelessWidget {
     }
   }
 
-  void _showCreateUserDialog(
-    BuildContext context,
-    UserManagementController controller,
-  ) {
+  void _showCreateUserDialog(BuildContext context, UserManagementController controller) {
     controller.nameController.clear();
     controller.phoneController.clear();
     controller.emailController.clear();
@@ -247,11 +270,7 @@ class AdminHomeScreen extends StatelessWidget {
     _showUserFormDialog(context, controller, 'Create User', false);
   }
 
-  void _showEditUserDialog(
-    BuildContext context,
-    User user,
-    UserManagementController controller,
-  ) {
+  void _showEditUserDialog(BuildContext context, User user, UserManagementController controller) {
     controller.loadUserForEdit(user);
     _showUserFormDialog(context, controller, 'Edit User', true);
   }
@@ -296,14 +315,6 @@ class AdminHomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                //     TextField(
-                //   controller: controller.emailController,
-                //   decoration: const InputDecoration(
-                //     labelText: 'Email',
-                //     border: OutlineInputBorder(),
-                //   ),
-                // ),
-                // const SizedBox(height: 16),
                 TextField(
                   controller: controller.passwordController,
                   obscureText: true,
@@ -313,27 +324,22 @@ class AdminHomeScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Obx(
-                  () => DropdownButtonFormField<String>(
-                    value: controller.selectedRole.value,
-                    decoration: const InputDecoration(
-                      labelText: 'Role',
-                      border: OutlineInputBorder(),
-                    ),
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'employee',
-                        child: Text('Employee'),
-                      ),
-                      DropdownMenuItem(value: 'admin', child: Text('Admin')),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        controller.selectedRole.value = value;
-                      }
-                    },
+                Obx(() => DropdownButtonFormField<String>(
+                  value: controller.selectedRole.value,
+                  decoration: const InputDecoration(
+                    labelText: 'Role',
+                    border: OutlineInputBorder(),
                   ),
-                ),
+                  items: const [
+                    DropdownMenuItem(value: 'employee', child: Text('Employee')),
+                    DropdownMenuItem(value: 'admin', child: Text('Admin')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      controller.selectedRole.value = value;
+                    }
+                  },
+                )),
               ],
             ),
           ),
@@ -343,50 +349,39 @@ class AdminHomeScreen extends StatelessWidget {
             onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
-          Obx(
-            () => ElevatedButton(
-              onPressed:
-                  controller.isCreating.value || controller.isUpdating.value
-                  ? null
-                  : () async {
-                      bool success = false;
-                      if (isEdit) {
-                        success = await controller.updateUser(
-                          controller.selectedUser.value!.id!,
-                        );
-                      } else {
-                        success = await controller.createUser();
-                      }
-                      if (success && context.mounted) {
-                        Navigator.of(context).pop();
-                      }
-                    },
-              child: controller.isCreating.value || controller.isUpdating.value
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Text(isEdit ? 'Update' : 'Create'),
-            ),
-          ),
+          Obx(() => ElevatedButton(
+            onPressed: controller.isCreating.value || controller.isUpdating.value
+                ? null
+                : () async {
+                    bool success = false;
+                    if (isEdit) {
+                      success = await controller.updateUser(controller.selectedUser.value!.id!);
+                    } else {
+                      success = await controller.createUser();
+                    }
+                    if (success && context.mounted) {
+                      Navigator.of(context).pop();
+                    }
+                  },
+            child: controller.isCreating.value || controller.isUpdating.value
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Text(isEdit ? 'Update' : 'Create'),
+          )),
         ],
       ),
     );
   }
 
-  void _showDeleteDialog(
-    BuildContext context,
-    User user,
-    UserManagementController controller,
-  ) {
+  void _showDeleteDialog(BuildContext context, User user, UserManagementController controller) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete User'),
-        content: Text(
-          'Are you sure you want to delete ${user.name}? This action cannot be undone.',
-        ),
+        content: Text('Are you sure you want to delete ${user.name}? This action cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -404,6 +399,5 @@ class AdminHomeScreen extends StatelessWidget {
       ),
     );
   }
-
 
 }

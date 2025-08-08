@@ -1,18 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../models/user_model.dart';
 import '../../routes/app_pages.dart';
-import '../../routes/app_routes.dart';
 import '../../services/hive_service.dart';
 import '../../shared/constant/app_colors.dart';
 import '../../shared/constant/font_helper.dart';
 import '../../shared/services/storage_service.dart';
+import '../../utils/utils.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Get current user data
+    final UserModel? currentUser = StorageService.instance.getUserId();
+    final String userRole = Utils.getCurrentUserRole() ?? 'employee';
+    final bool isAdmin = Utils.isAdmin();
+    
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile', style: FontHelper.ts20w700(color: Colors.white)),
@@ -30,12 +36,12 @@ class ProfileScreen extends StatelessWidget {
               // Profile Header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
                       AppColors.kcPrimaryColor.withOpacity(0.8),
-                      Colors.blue[700]!,
+                      isAdmin ? Colors.red[700]! : Colors.blue[700]!,
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -45,104 +51,138 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     CircleAvatar(
-                      radius: 35,
+                      radius: 25,
                       backgroundColor: Colors.white,
                       child: Icon(
-                        Icons.person,
-                        size: 50,
-                        color: AppColors.kcPrimaryColor,
+                        isAdmin ? Icons.admin_panel_settings : Icons.person,
+                        size: 40,
+                        color: isAdmin ? Colors.red[700] : AppColors.kcPrimaryColor,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'John Anderson',
-                      style: TextStyle(
-                        fontSize: 24,
+                    const SizedBox(height: 12),
+                    Text(
+                      currentUser?.name ?? 'Unknown User',
+                      style: const TextStyle(
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
                     ),
-                    // const SizedBox(height: 8),
-                    Text(
-                      'Senior Marine Inspector',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.white.withOpacity(0.9),
+                    const SizedBox(height: 2),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      ),
+                      child: Text(
+                        isAdmin ? '👑 ADMINISTRATOR' : '🔧 MARINE INSPECTOR',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'License: MI-2024-001',
+                      'ID: ${currentUser?.id?.substring(0, 8).toUpperCase() ?? 'N/A'}',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: Colors.white.withOpacity(0.8),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // Statistics Section
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildStatCard(
-                      'Inspections\nCompleted',
-                      '247',
-                      Colors.green,
+              // Role-based Statistics Section
+              if (isAdmin) 
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        'System\nRole',
+                        'ADMIN',
+                        Colors.red,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Average\nRating',
-                      '4.8★',
-                      Colors.orange,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        'Manage\nUsers',
+                        '✓',
+                        Colors.orange,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: _buildStatCard(
-                      'Years\nExperience',
-                      '8',
-                      AppColors.kcPrimaryColor,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        'Full\nAccess',
+                        '∞',
+                        AppColors.kcPrimaryColor,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildStatCard(
+                        'Inspections\nCompleted',
+                        '247',
+                        Colors.green,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        'Average\nRating',
+                        '4.8★',
+                        Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildStatCard(
+                        'Years\nExperience',
+                        '8',
+                        AppColors.kcPrimaryColor,
+                      ),
+                    ),
+                  ],
+                ),
               const SizedBox(height: 24),
 
               // Profile Information
               _buildInfoSection('Personal Information', [
                 _buildInfoTile(
                   'Email',
-                  'john.anderson@marine.com',
+                  currentUser?.email ?? 'Not provided',
                   Icons.email,
                 ),
-                _buildInfoTile('Phone', '+1 (555) 123-4567', Icons.phone),
-                _buildInfoTile('Location', 'Miami, FL', Icons.location_on),
-                _buildInfoTile('License Expiry', 'Dec 31, 2025', Icons.badge),
+                _buildInfoTile(
+                  'Phone', 
+                  currentUser?.phone ?? 'Not provided', 
+                  Icons.phone
+                ),
+                _buildInfoTile(
+                  'Role', 
+                  userRole.toUpperCase(), 
+                  isAdmin ? Icons.admin_panel_settings : Icons.work
+                ),
+                _buildInfoTile(
+                  'Status', 
+                  'Active', 
+                  Icons.check_circle,
+                  valueColor: Colors.green,
+                ),
               ]),
               const SizedBox(height: 20),
-
-              // _buildInfoSection('Certifications', [
-              //   _buildCertificationTile('Marine Safety Inspector', 'Valid until 2025'),
-              //   _buildCertificationTile('Vessel Systems Expert', 'Valid until 2024'),
-              //   _buildCertificationTile('Emergency Response', 'Valid until 2026'),
-              // ]),
-              // const SizedBox(height: 20),
-
-              // Settings Section
-              // _buildInfoSection('Settings', [
-              //   _buildActionTile('Notifications', Icons.notifications, () => _openNotifications(context)),
-              //   _buildActionTile('Privacy & Security', Icons.security, () => _openPrivacy(context)),
-              //   _buildActionTile('Help & Support', Icons.help, () => _openSupport(context)),
-              //   _buildActionTile('About', Icons.info, () => _openAbout(context)),
-              // ]),
-              // const SizedBox(height: 20),
-
-              // Logout Button
               SizedBox(
                 width: double.infinity,
                 height: 50,
@@ -181,7 +221,7 @@ class ProfileScreen extends StatelessWidget {
 
   Widget _buildStatCard(String title, String value, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
@@ -199,12 +239,12 @@ class ProfileScreen extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.bold,
               color: color,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             title,
             style: const TextStyle(fontSize: 12, color: Colors.grey),
@@ -234,10 +274,10 @@ class ProfileScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Text(
               title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
           ...children,
@@ -246,12 +286,12 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoTile(String title, String value, IconData icon) {
+  Widget _buildInfoTile(String title, String value, IconData icon, {Color? valueColor}) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey[600], size: 20),
+          Icon(icon, color: Colors.grey[600], size: 18),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -264,9 +304,10 @@ class ProfileScreen extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   value,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: 14,
                     fontWeight: FontWeight.w500,
+                    color: valueColor,
                   ),
                 ),
               ],
@@ -274,88 +315,6 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildCertificationTile(String certification, String validity) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Icon(Icons.verified, color: Colors.green[600], size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  certification,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  validity,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildActionTile(String title, IconData icon, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.grey[600]),
-      title: Text(title),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: onTap,
-    );
-  }
-
-  void _editProfile(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit profile feature coming soon!')),
-    );
-  }
-
-  void _openNotifications(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Notifications settings coming soon!')),
-    );
-  }
-
-  void _openPrivacy(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Privacy settings coming soon!')),
-    );
-  }
-
-  void _openSupport(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Help & Support coming soon!')),
-    );
-  }
-
-  void _openAbout(BuildContext context) {
-    showAboutDialog(
-      context: context,
-      applicationName: 'Marine Inspection',
-      applicationVersion: '1.0.0',
-      applicationIcon: Icon(
-        Icons.directions_boat,
-        size: 48,
-        color: Colors.blue[900],
-      ),
-      children: [
-        const Text(
-          'Professional marine vessel inspection application for certified inspectors.',
-        ),
-      ],
     );
   }
 
@@ -375,7 +334,7 @@ class ProfileScreen extends StatelessWidget {
               child: const Text('Logout'),
               onPressed: () {
                 StorageService.instance.clear();
-                HiveService.instance.clearAllData();
+               HiveService.instance.clearAllData();
                 context.go(AppPages.login);
               },
             ),

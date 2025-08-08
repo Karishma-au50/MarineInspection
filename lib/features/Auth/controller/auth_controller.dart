@@ -13,6 +13,8 @@ class AuthController extends GetxController {
     try {
       final res = await _api.login(mobile: mobile, password: password);
       if (res.status ?? false) {
+       
+
         MyToasts.toastSuccess(res.message ?? "Success");
         return true;
       } else {

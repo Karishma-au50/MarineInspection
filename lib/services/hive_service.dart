@@ -210,6 +210,7 @@ class HiveService {
     ]);
   }
 
+  // clear all give data
   Future<void> clearAllData() async {
     await clearAllInspectionSubmissions();
     await clearAllCache();
@@ -220,8 +221,6 @@ class HiveService {
     // Reinitialize Hive
     await init();
   }
- 
-  
 
   /// Clear expired cache entries
   Future<void> clearExpiredCache() async {

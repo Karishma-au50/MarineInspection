@@ -76,7 +76,7 @@ class User implements BaseModel {
     return {
       'name': name,
       'phone': phone,
-      // 'email': email,
+       'email': email,
       'role': role ?? 'employee',
       'password': password,
     };

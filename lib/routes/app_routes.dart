@@ -35,6 +35,7 @@ class AppRoutes {
             section: extra?['section'],
             templateId: extra?['templateId'],
             inspectionId: extra?['inspectionId'],
+            shipName: extra?['shipName'],
           );
         },
       ),

@@ -9,6 +9,7 @@ import 'package:marine_inspection/shared/constant/font_helper.dart';
 import 'package:marine_inspection/shared/widgets/buttons/my_button.dart';
 import 'package:marine_inspection/shared/widgets/toast/my_toast.dart';
 import 'package:marine_inspection/services/hive_service.dart';
+import 'package:marine_inspection/utils/network_utils.dart';
 import 'package:marine_inspection/widgets/sync_status_widget.dart';
 
 import '../../shared/constant/default_appbar.dart';
@@ -26,6 +27,11 @@ class _HomeScreenState extends State<HomeScreen> {
   Rx<InspectionTemplate?> inspectionTemplate = Rx<InspectionTemplate?>(null);
   final RxBool isLoad = true.obs;
   final RxMap<String, String> sectionStatuses = <String, String>{}.obs;
+  
+  // Ship name controller and reactive variable
+  final TextEditingController shipNameController = TextEditingController();
+  final RxString shipName = ''.obs;
+  final RxBool isShipNameValid = false.obs;
 
   // Initialize the InspectionService
   final inspectionController = Get.isRegistered<InspectionController>()
@@ -36,6 +42,44 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadInspectionTemplate();
+    _setupShipNameController();
+  }
+
+  void _setupShipNameController() {
+    // Listen to ship name changes
+    shipNameController.addListener(() {
+      shipName.value = shipNameController.text;
+      isShipNameValid.value = shipNameController.text.trim().isNotEmpty;
+    });
+    
+    // Load saved ship name from Hive if exists
+    _loadSavedShipName();
+  }
+
+  Future<void> _loadSavedShipName() async {
+    try {
+      // Check if there's any existing inspection with ship name
+      final submissions = await HiveService.instance.getAllInspectionSubmissions();
+      if (submissions.isNotEmpty) {
+        final firstSubmissionWithShipName = submissions.firstWhere(
+          (submission) => submission.shipName != null && submission.shipName!.isNotEmpty,
+          orElse: () => submissions.first,
+        );
+        if (firstSubmissionWithShipName.shipName != null) {
+          shipNameController.text = firstSubmissionWithShipName.shipName!;
+          shipName.value = firstSubmissionWithShipName.shipName!;
+          isShipNameValid.value = true;
+        }
+      }
+    } catch (e) {
+      print('Error loading saved ship name: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    shipNameController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadInspectionTemplate() async {
@@ -108,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// Build progress card widget
   Widget _buildProgressCard(String status, int count, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
@@ -155,13 +199,92 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   // Sync Status Widget
                   const SyncStatusWidget(showDetails: false),
+               
                   const SizedBox(height: 16),
-                  
-                  Text(
-                    'Please select a section to begin inspection.',
-                    style: FontHelper.ts14w500(color: Colors.black),
+
+                  // Ship Name Input Field
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.1),
+                          spreadRadius: 1,
+                          blurRadius: 6,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(12.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.directions_boat,
+                              color: AppColors.kcPrimaryColor,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Ship Information',
+                              style: FontHelper.ts16w600(color: Colors.black),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        TextFormField(
+                          controller: shipNameController,
+                          decoration: InputDecoration(
+                            labelText: 'Enter Ship Name *',
+                            hintText: 'e.g., MV Ocean Explorer',
+                            prefixIcon: const Icon(Icons.anchor),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 0,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: BorderSide(
+                                color: AppColors.kcPrimaryColor,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) {
+                            shipName.value = value;
+                            isShipNameValid.value = value.trim().isNotEmpty;
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        Obx(() => Row(
+                          children: [
+                            Icon(
+                              isShipNameValid.value ? Icons.check_circle : Icons.info,
+                              color: isShipNameValid.value ? Colors.green : Colors.orange,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              isShipNameValid.value 
+                                  ? 'Ship name saved' 
+                                  : 'Ship name is required before starting inspection',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: isShipNameValid.value ? Colors.green : Colors.orange,
+                              ),
+                            ),
+                          ],
+                        )),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Progress Summary Card
                   Obx(
@@ -178,7 +301,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.all(10.0),
                       child: Row(
                         children: [
                           Expanded(
@@ -231,6 +354,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             : Colors.grey,
                         onPressed: allCompleted
                             ? () async {
+                              if(!(await NetworkUtils.isConnected())){
+                                MyToasts.toastError(
+                                  'Please check your internet connection before submitting.',
+                                );
+                                return;
+                              }
                                 // Reset all section statuses to 'Not Started'
                                 for (final section
                                     in inspectionTemplate.value!.sections) {
@@ -240,6 +369,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
                                 HiveService.instance
                                     .clearAllInspectionSubmissions();
+                                
+                                // Clear ship name after successful submission
+                                shipNameController.clear();
+                                shipName.value = '';
+                                isShipNameValid.value = false;
+                                
                                 MyToasts.toastSuccess(
                                   'Submission successful! You can start a new inspection.',
                                 );
@@ -260,7 +395,15 @@ class _HomeScreenState extends State<HomeScreen> {
                     (section) => Obx(
                       () => GestureDetector(
                         onTap: () {
-                          // Navigate to question answer screen with section data
+                          // Validate ship name before navigation
+                          if (shipName.value.trim().isEmpty) {
+                            MyToasts.toastError(
+                              'Please enter the ship name before starting inspection.',
+                            );
+                            return;
+                          }
+                          
+                          // Navigate to question answer screen with section data and ship name
                           context
                               .push(
                                 AppPages.questionAnswer,
@@ -269,6 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   'templateId':
                                       inspectionTemplate.value!.templateId,
                                   'inspectionId': inspectionId,
+                                  'shipName': shipName.value.trim(),
                                 },
                               )
                               .then((_) {

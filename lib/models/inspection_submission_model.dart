@@ -15,9 +15,17 @@ class InspectionSubmission {
   final String sectionId;
   @HiveField(3)
   String? inspectionId;
+  @HiveField(4)
+  String? shipName;
   
 
-  InspectionSubmission({required this.answers, required this.inspectionDate, required this.sectionId, this.inspectionId});
+  InspectionSubmission({
+    required this.answers, 
+    required this.inspectionDate, 
+    required this.sectionId, 
+    this.inspectionId,
+    this.shipName,
+  });
 
   Future<FormData> toFormData() async {
     final formMap = <String, dynamic>{};
@@ -28,6 +36,11 @@ class InspectionSubmission {
     }
 
     formMap['inspectionDate'] = inspectionDate.toUtc().toIso8601String();
+    
+    // Add ship name if provided
+    if (shipName != null && shipName!.isNotEmpty) {
+      formMap['shipName'] = shipName;
+    }
 
     return FormData.fromMap(formMap);
   }

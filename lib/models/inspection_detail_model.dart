@@ -9,6 +9,7 @@ class InspectionDetailData {
   final List<InspectionSection> sections;
   final String generatedAt;
   final String generatedBy;
+  final String shipName;
 
   InspectionDetailData({
     required this.inspection,
@@ -16,6 +17,7 @@ class InspectionDetailData {
     required this.sections,
     required this.generatedAt,
     required this.generatedBy,
+    required this.shipName,
   });
 
   factory InspectionDetailData.fromJson(Map<String, dynamic> json) {
@@ -28,6 +30,7 @@ class InspectionDetailData {
           [],
       generatedAt: json['generatedAt'] ?? '',
       generatedBy: json['generatedBy'] ?? '',
+      shipName: json['shipName'] ?? '',
     );
   }
 
@@ -38,6 +41,7 @@ class InspectionDetailData {
       'sections': sections.map((section) => section.toJson()).toList(),
       'generatedAt': generatedAt,
       'generatedBy': generatedBy,
+      'shipName': shipName,
     };
   }
 }

@@ -5,7 +5,6 @@ import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:marine_inspection/models/inspection_submission_model.dart';
 import 'package:marine_inspection/models/inspection_template.dart';
-import 'package:marine_inspection/shared/services/storage_service.dart';
 import 'package:marine_inspection/utils/network_utils.dart';
 
 import '../../../core/expections/custom_exception.dart';
@@ -13,6 +12,7 @@ import '../../../models/inspection_detail_model.dart';
 import '../../../models/inspection_model.dart';
 import '../../../services/hive_service.dart';
 import '../../../services/sync_service.dart';
+import '../../../shared/services/storage_service.dart';
 import '../services/inspection_service.dart';
 import '../../../shared/widgets/toast/my_toast.dart';
 
@@ -238,6 +238,7 @@ class InspectionController extends GetxController {
       // First check local storage for immediate response
       final localSubmission = await HiveService.instance
           .getInspectionSubmissionsBySectionId(sectionId);
+
       // Check network connectivity
       final isConnected = await NetworkUtils.isConnected();
 
@@ -256,23 +257,21 @@ class InspectionController extends GetxController {
             }
             return res.data;
           } else {
-            // Check for cached inspection details
-            if (await HiveService.instance.isCacheValid(
-              'inspection_details_$sectionId',
-            )) {
-              final cachedJson = await HiveService.instance
-                  .getCachedInspectionDetails(sectionId);
-              if (cachedJson != null) {
-                final cachedData = json.decode(cachedJson);
-                log('InspectionController: Using cached inspection details');
-                return InspectionDetailData.fromJson(cachedData);
-              }
-            }
             // Fall back to cached data or local submission
             if (localSubmission != null) {
               MyToasts.toastError("Using local data. Server response failed.");
-              // Convert local submission to InspectionDetailData if needed
-              // You may need to implement this conversion based on your data structure
+              // Check for cached inspection details
+              if (await HiveService.instance.isCacheValid(
+                'inspection_details_$sectionId',
+              )) {
+                final cachedJson = await HiveService.instance
+                    .getCachedInspectionDetails(sectionId);
+                if (cachedJson != null) {
+                  final cachedData = json.decode(cachedJson);
+                  log('InspectionController: Using cached inspection details');
+                  return InspectionDetailData.fromJson(cachedData);
+                }
+              }
             }
             throw FetchDataException(res.message);
           }

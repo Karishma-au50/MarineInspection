@@ -70,7 +70,7 @@ class UserManagementService extends BaseApiService {
   /// Update user (Admin only)
   Future<ResponseModel<User?>> updateUser(String id, User user) async {
     final res = await put(
-      '${UserManagementEndpoint.updateUser}info?id=$id',
+      '${UserManagementEndpoint.updateUser}$id',
       data: user.toUpdateJson(),
       options: Options(
         headers: {

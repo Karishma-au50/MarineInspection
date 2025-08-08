@@ -78,7 +78,7 @@ class UserManagementController extends GetxController {
 
   /// Create new user
   Future<bool> createUser() async {
-    // if (!_validateForm()) return false;
+    if (!_validateForm()) return false;
 
     try {
       isCreating.value = true;
@@ -121,6 +121,7 @@ class UserManagementController extends GetxController {
       isUpdating.value = true;
 
       final user = User(
+        id: id,
         name: nameController.text.trim(),
         phone: phoneController.text.trim(),
         email: emailController.text.trim(),
@@ -210,12 +211,7 @@ class UserManagementController extends GetxController {
       return false;
     }
 
-    if (emailController.text.trim().isEmpty) {
-      MyToasts.toastError("Email is required");
-      return false;
-    }
-
-    if (!GetUtils.isEmail(emailController.text.trim())) {
+    if (emailController.text.isNotEmpty && !GetUtils.isEmail(emailController.text.trim())) {
       MyToasts.toastError("Please enter a valid email");
       return false;
     }

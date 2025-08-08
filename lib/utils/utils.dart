@@ -20,6 +20,13 @@ extension InspectionSubmissionListExtension on List<InspectionSubmission> {
       formMap['inspectionDate'] = first.inspectionDate
           .toUtc()
           .toIso8601String();
+
+      formMap['shipName'] =
+          firstWhere(
+            (submission) =>
+                submission.shipName != null || submission.shipName!.isNotEmpty,
+          ).shipName ??
+          'Unknown Ship';
     }
 
     // Process each section
