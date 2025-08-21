@@ -426,170 +426,174 @@ class _QuestionAnswerScreenState extends State<QuestionAnswerScreen> {
     final section = widget.section!;
     final questions = section.questions;
 
-    return Scaffold(
-      backgroundColor: Colors.grey[50],
-      appBar: defaultAppBar(context, isLeading: true),
-      body: Column(
-        children: [
-          // Header with section info
-          Container(
-            width: double.infinity,
-            margin: const EdgeInsets.all(16),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  spreadRadius: 1,
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(
-                      Icons.directions_boat,
-                      color: AppColors.kcPrimaryColor,
-                      size: 20,
+    return SafeArea(
+      bottom: true,
+      top: false,
+      child: Scaffold(
+        backgroundColor: Colors.grey[50],
+        appBar: defaultAppBar(context, isLeading: true),
+        body: Column(
+          children: [
+            // Header with section info
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 6,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.directions_boat,
+                        color: AppColors.kcPrimaryColor,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          widget.shipName ?? 'Unknown Ship',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: AppColors.kcPrimaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    section.sectionName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        widget.shipName ?? 'Unknown Ship',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: AppColors.kcPrimaryColor,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Complete all ${questions.length} inspection items in this section',
+                    style: const TextStyle(fontSize: 13, color: Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+      
+            // Page indicator
+            if (questions.length > 1)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (int i = 0; i < questions.length; i++)
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      width: currentPage == i ? 12 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: currentPage == i
+                            ? AppColors.kcPrimaryAccentColor
+                            : Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                ],
+              ),
+      
+            const SizedBox(height: 16),
+      
+            // PageView for questions
+            Expanded(
+              child: questions.length == 1
+                  ? _buildSingleQuestionView(questions.first)
+                  : _buildPageView(questions),
+            ),
+      
+            // Navigation buttons (only show for multiple questions)
+            if (questions.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    // Previous button
+                    ElevatedButton.icon(
+                      onPressed: currentPage > 0
+                          ? () {
+                              _pageController.previousPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                            }
+                          : null,
+                      icon: const Icon(Icons.chevron_left),
+                      label: const Text('Previous'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey.shade200,
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+      
+                    // Next button
+                    ElevatedButton.icon(
+                      onPressed: currentPage < questions.length - 1
+                          ? () async {
+                              _pageController.nextPage(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                              HiveService.instance.saveInspectionSubmission(
+                                inspectionSubmissions,
+                              );
+      
+                              var data = await HiveService.instance
+                                  .getAllInspectionSubmissions();
+                              print(data);
+                            }
+                          : () async {
+                              var res = 
+                              await inspectionController
+                                  .submitInspection(inspectionSubmissions);
+                              if (res) {
+                                // ignore: use_build_context_synchronously
+                                context.go(AppPages.home);
+                              }
+                            },
+                      icon: const Icon(Icons.chevron_right),
+                      label: Text(
+                        currentPage < questions.length - 1 ? 'Next' : 'Submit',
+                      ),
+                      iconAlignment: IconAlignment.end,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.kcPrimaryAccentColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  section.sectionName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Complete all ${questions.length} inspection items in this section',
-                  style: const TextStyle(fontSize: 13, color: Colors.black54),
-                ),
-              ],
-            ),
-          ),
-
-          // Page indicator
-          if (questions.length > 1)
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (int i = 0; i < questions.length; i++)
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 4),
-                    width: currentPage == i ? 12 : 8,
-                    height: 8,
-                    decoration: BoxDecoration(
-                      color: currentPage == i
-                          ? AppColors.kcPrimaryAccentColor
-                          : Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-              ],
-            ),
-
-          const SizedBox(height: 16),
-
-          // PageView for questions
-          Expanded(
-            child: questions.length == 1
-                ? _buildSingleQuestionView(questions.first)
-                : _buildPageView(questions),
-          ),
-
-          // Navigation buttons (only show for multiple questions)
-          if (questions.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Previous button
-                  ElevatedButton.icon(
-                    onPressed: currentPage > 0
-                        ? () {
-                            _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          }
-                        : null,
-                    icon: const Icon(Icons.chevron_left),
-                    label: const Text('Previous'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.black87,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-
-                  // Next button
-                  ElevatedButton.icon(
-                    onPressed: currentPage < questions.length - 1
-                        ? () async {
-                            _pageController.nextPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                            HiveService.instance.saveInspectionSubmission(
-                              inspectionSubmissions,
-                            );
-
-                            var data = await HiveService.instance
-                                .getAllInspectionSubmissions();
-                            print(data);
-                          }
-                        : () async {
-                            var res = 
-                            await inspectionController
-                                .submitInspection(inspectionSubmissions);
-                            if (res) {
-                              // ignore: use_build_context_synchronously
-                              context.go(AppPages.home);
-                            }
-                          },
-                    icon: const Icon(Icons.chevron_right),
-                    label: Text(
-                      currentPage < questions.length - 1 ? 'Next' : 'Submit',
-                    ),
-                    iconAlignment: IconAlignment.end,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.kcPrimaryAccentColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                ],
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
