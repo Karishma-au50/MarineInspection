@@ -21,13 +21,14 @@ class InspectionSubmissionAdapter extends TypeAdapter<InspectionSubmission> {
       inspectionDate: fields[1] as DateTime,
       sectionId: fields[2] as String,
       inspectionId: fields[3] as String?,
+      shipName: fields[4] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, InspectionSubmission obj) {
     writer
-      ..writeByte(4)
+      ..writeByte(5)
       ..writeByte(0)
       ..write(obj.answers)
       ..writeByte(1)
@@ -35,7 +36,9 @@ class InspectionSubmissionAdapter extends TypeAdapter<InspectionSubmission> {
       ..writeByte(2)
       ..write(obj.sectionId)
       ..writeByte(3)
-      ..write(obj.inspectionId);
+      ..write(obj.inspectionId)
+      ..writeByte(4)
+      ..write(obj.shipName);
   }
 
   @override

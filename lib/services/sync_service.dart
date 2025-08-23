@@ -3,8 +3,10 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:marine_inspection/shared/services/storage_service.dart';
 import 'package:marine_inspection/utils/network_utils.dart';
+import '../core/model/response_model.dart';
 import '../features/Inspections/services/inspection_service.dart';
 import '../models/inspection_submission_model.dart';
+import '../models/inspection_template.dart';
 import '../utils/utils.dart';
 import 'hive_service.dart';
 import '../shared/widgets/toast/my_toast.dart';
@@ -17,32 +19,32 @@ class SyncService {
   final InspectionService _inspectionService = InspectionService();
   Timer? _syncTimer;
   bool _isSyncing = false;
-  
+
   static const Duration _syncInterval = Duration(minutes: 5);
-  
+
   // Stream controllers for real-time sync status
-  final StreamController<SyncStatus> _syncStatusController = 
+  final StreamController<SyncStatus> _syncStatusController =
       StreamController<SyncStatus>.broadcast();
-  
+
   Stream<SyncStatus> get syncStatusStream => _syncStatusController.stream;
-  
+
   SyncStatus _currentStatus = SyncStatus.idle;
   SyncStatus get currentStatus => _currentStatus;
 
   /// Initialize the sync service
   Future<void> init() async {
     log('SyncService: Initializing...');
-    
+
     // Start periodic background sync
     startPeriodicSync();
-    
+
     // Listen to network changes for auto-sync
     NetworkUtils.connectivityStream.listen((connectivityResults) {
       if (connectivityResults.isNotEmpty) {
         _onNetworkConnected();
       }
     });
-    
+
     log('SyncService: Initialized successfully');
   }
 
@@ -95,9 +97,12 @@ class SyncService {
       await HiveService.instance.clearExpiredCache();
 
       // 2. Sync pending submissions
-      final pendingSubmissions = await HiveService.instance.getAllInspectionSubmissions();
+      final pendingSubmissions = await HiveService.instance
+          .getAllInspectionSubmissions();
       if (pendingSubmissions.isNotEmpty) {
-        log('SyncService: Found ${pendingSubmissions.length} pending submissions');
+        log(
+          'SyncService: Found ${pendingSubmissions.length} pending submissions',
+        );
         allSuccess &= await _syncSubmissions(pendingSubmissions);
       }
 
@@ -134,51 +139,67 @@ class SyncService {
       return true;
     }
 
+    var pendingSubmissions = submissions
+        .where((s) => s.inspectionId == null || s.inspectionId!.isEmpty)
+        .toList();
+
     try {
       // Use the new multiple submissions API
       final response = await _inspectionService.submitMultipleInspectionAnswers(
-        inspectionSubmissions: submissions,
+        inspectionSubmissions: pendingSubmissions,
       );
-      
+
       if (response.status == true) {
         // Update all submissions with server response
         final responseData = response.data;
         if (responseData != null && responseData is Map) {
           // Handle successful bulk submission
-          for (int i = 0; i < submissions.length; i++) {
-            final submission = submissions[i];
-            
+          for (int i = 0; i < pendingSubmissions.length; i++) {
+            final submission = pendingSubmissions[i];
+
             // Update submission with server response if available
-            if (responseData["inspections"] != null && 
+            if (responseData["inspections"] != null &&
                 responseData["inspections"] is List &&
                 i < responseData["inspections"].length) {
               final inspectionData = responseData["inspections"][i];
-              if (inspectionData != null && inspectionData["inspectionId"] != null) {
+              if (inspectionData != null &&
+                  inspectionData["inspectionId"] != null) {
                 submission.inspectionId = inspectionData["inspectionId"];
               }
             }
-            
-            // Remove successfully synced submission from local storage
-            await HiveService.instance.removeInspectionSubmission(submission);
-          }
-        } else {
-          // If no specific response data, still remove submissions as they were accepted
-          for (final submission in submissions) {
-            await HiveService.instance.removeInspectionSubmission(submission);
+
+            // // Remove successfully synced submission from local storage
+            // await HiveService.instance.removeInspectionSubmission(submission);
+
+            if (await _isAllSubmissionsSynced(pendingSubmissions.length)) {
+              await HiveService.instance.removeInspectionSubmission(submission);
+            }
           }
         }
-        
-        log('SyncService: ${submissions.length} submissions synced and removed from local storage');
-        MyToasts.toastSuccess('${submissions.length} submissions synced successfully');
+        // else {
+        //   // If no specific response data, still remove submissions as they were accepted
+        //   for (final submission in submissions) {
+        //     await HiveService.instance.removeInspectionSubmission(submission);
+        //   }
+        // }
+
+        log(
+          'SyncService: ${pendingSubmissions.length} submissions synced and removed from local storage',
+        );
+        MyToasts.toastSuccess(
+          '${pendingSubmissions.length} submissions synced successfully',
+        );
         return true;
       } else {
-        log('SyncService: Failed to sync multiple submissions: ${response.message}');
+        log(
+          'SyncService: Failed to sync multiple submissions: ${response.message}',
+        );
         MyToasts.toastError('Failed to sync submissions: ${response.message}');
         return false;
       }
     } catch (e) {
       log('SyncService: Error syncing multiple submissions: $e');
-      
+
       // Fallback to individual submission if bulk fails
       log('SyncService: Falling back to individual submission sync');
       return await _syncSubmissionsIndividually(submissions);
@@ -186,40 +207,65 @@ class SyncService {
   }
 
   /// Fallback method to sync submissions individually
-  Future<bool> _syncSubmissionsIndividually(List<InspectionSubmission> submissions) async {
+  Future<bool> _syncSubmissionsIndividually(
+    List<InspectionSubmission> submissions,
+  ) async {
     int successCount = 0;
-    
-    for (final submission in submissions) {
+
+    var pendingSubmissions = submissions
+        .where((s) => s.inspectionId == null || s.inspectionId!.isEmpty)
+        .toList();
+
+    for (final submission in pendingSubmissions) {
       try {
         final response = await _inspectionService.submitInspectionAnswers(
           inspectionSubmission: submission,
         );
-        
+
         if (response.status == true) {
           // Update submission with server response
-          submission.inspectionId = response.data?["inspection"]?['inspectionId'];
-          
+          submission.inspectionId =
+              response.data?["inspection"]?['inspectionId'];
+
           // Remove successfully synced submission from local storage
-          await HiveService.instance.removeInspectionSubmission(submission);
-          
+          // await HiveService.instance.removeInspectionSubmission(submission);
+          if (await _isAllSubmissionsSynced(pendingSubmissions.length)) {
+            await HiveService.instance.removeInspectionSubmission(submission);
+          }
+
           successCount++;
-          log('SyncService: Submission synced and removed for section ${submission.sectionId}');
+          log(
+            'SyncService: Submission synced and removed for section ${submission.sectionId}',
+          );
         } else {
-          log('SyncService: Failed to sync submission for section ${submission.sectionId}: ${response.message}');
+          log(
+            'SyncService: Failed to sync submission for section ${submission.sectionId}: ${response.message}',
+          );
         }
       } catch (e) {
-        log('SyncService: Error syncing submission for section ${submission.sectionId}: $e');
+        log(
+          'SyncService: Error syncing submission for section ${submission.sectionId}: $e',
+        );
       }
     }
 
-    final isSuccess = successCount == submissions.length;
+    final isSuccess = successCount == pendingSubmissions.length;
     if (isSuccess) {
       MyToasts.toastSuccess('$successCount submissions synced successfully');
     } else {
-      MyToasts.toastError('$successCount of ${submissions.length} submissions synced');
+      MyToasts.toastError(
+        '$successCount of ${pendingSubmissions.length} submissions synced',
+      );
     }
 
     return isSuccess;
+  }
+
+  Future<bool> _isAllSubmissionsSynced(int submissionCount) async {
+    String? cachedTemplate = await HiveService.instance
+        .getCachedInspectionTemplate();
+    ResponseModel<InspectionTemplate?> template = jsonDecode(cachedTemplate!);
+    return template.data?.sections.length == submissionCount;
   }
 
   /// Sync inspection templates from server
@@ -232,7 +278,7 @@ class SyncService {
       }
 
       final response = await _inspectionService.getInspectionTemplate();
-      
+
       if (response.status == true && response.data != null) {
         // Cache the template as JSON
         final templateJson = jsonEncode(response.data!.toJson());
@@ -240,7 +286,9 @@ class SyncService {
         log('SyncService: Inspection template synced and cached successfully');
         return true;
       } else {
-        log('SyncService: Failed to sync inspection template: ${response.message}');
+        log(
+          'SyncService: Failed to sync inspection template: ${response.message}',
+        );
         return false;
       }
     } catch (e) {
@@ -266,7 +314,7 @@ class SyncService {
       }
 
       final response = await _inspectionService.getInspectionsByUserId(userId);
-      
+
       // Cache the inspection list as JSON
       final listJson = jsonEncode(response.toJson());
       await HiveService.instance.cacheInspectionList(userId, listJson);
@@ -282,9 +330,14 @@ class SyncService {
   Future<bool> _syncAndCacheInspectionDetails() async {
     try {
       // Get recently accessed sections from local submissions
-      final submissions = await HiveService.instance.getAllInspectionSubmissions();
+      final submissions = await HiveService.instance
+          .getAllInspectionSubmissions();
       final recentSectionIds = submissions
-          .where((s) => s.inspectionDate.isAfter(DateTime.now().subtract(const Duration(days: 7))))
+          .where(
+            (s) => s.inspectionDate.isAfter(
+              DateTime.now().subtract(const Duration(days: 7)),
+            ),
+          )
           .map((s) => s.sectionId)
           .toSet();
 
@@ -293,17 +346,28 @@ class SyncService {
       for (final sectionId in recentSectionIds) {
         try {
           // Check if we have valid cached details
-          if (await HiveService.instance.isCacheValid('inspection_details_$sectionId')) {
-            log('SyncService: Using valid cached details for section $sectionId');
+          if (await HiveService.instance.isCacheValid(
+            'inspection_details_$sectionId',
+          )) {
+            log(
+              'SyncService: Using valid cached details for section $sectionId',
+            );
             continue;
           }
 
-          final response = await _inspectionService.getInspectionBySectionId(sectionId);
-          
+          final response = await _inspectionService.getInspectionBySectionId(
+            sectionId,
+          );
+
           // Cache the inspection details as JSON
           final detailsJson = jsonEncode(response.toJson());
-          await HiveService.instance.cacheInspectionDetails(sectionId, detailsJson);
-          log('SyncService: Details for section $sectionId synced and cached successfully');
+          await HiveService.instance.cacheInspectionDetails(
+            sectionId,
+            detailsJson,
+          );
+          log(
+            'SyncService: Details for section $sectionId synced and cached successfully',
+          );
         } catch (e) {
           log('SyncService: Error syncing details for section $sectionId: $e');
           allSuccess = false;
@@ -323,8 +387,10 @@ class SyncService {
     // For example, from StorageService or SharedPreferences
     try {
       // This is a placeholder - replace with your actual user ID retrieval
-    return  Utils.isEmployee() ? StorageService.instance.getUserId()?.id : null;
-       // Replace with actual implementation
+      return Utils.isEmployee()
+          ? StorageService.instance.getUserId()?.id
+          : null;
+      // Replace with actual implementation
     } catch (e) {
       log('SyncService: Error getting current user ID: $e');
       return null;
@@ -342,7 +408,7 @@ class SyncService {
     final pendingCount = await HiveService.instance.getSubmissionsCount();
     final hasNetwork = await NetworkUtils.isConnected();
     final cacheStats = await HiveService.instance.getCacheStats();
-    
+
     return SyncStats(
       pendingSubmissions: pendingCount,
       hasNetworkConnection: hasNetwork,
@@ -366,14 +432,7 @@ class SyncService {
 }
 
 /// Sync status enum
-enum SyncStatus {
-  idle,
-  syncing,
-  success,
-  partialSuccess,
-  error,
-  noNetwork,
-}
+enum SyncStatus { idle, syncing, success, partialSuccess, error, noNetwork }
 
 /// Sync statistics model
 class SyncStats {
